@@ -103,7 +103,7 @@ Discrete, independently testable stages:
 6. **Load** into Qdrant with metadata payload + payload indexes on `drug_name` / `section_type` / `species`.
 
 **Idempotent, content-hash-based re-indexing:**
-- Each chunk has a stable logical key (`drug + section + species + ordinal`); Qdrant point ID = `hash(logical_key)` → upserts overwrite, never duplicate.
+- Each chunk has a stable logical key (`drug + section + species + ordinal`); Qdrant point ID = `hash(logical_key)` → upserts overwrite, never duplicate. (`ordinal` = the sub-chunk index when one `(drug, section, species)` unit is too long for a single chunk and must be size-split; most units fit in one chunk → `ordinal=0`, ordered by reading order.)
 - A `content_hash = sha256(text + metadata)` is stored on the point; on re-run, unchanged chunks are skipped (no re-embed), changed/new chunks are re-embedded + upserted, and points whose logical key disappears are pruned.
 - Result: `vet-agent ingest` is one command; first run embeds everything, later runs after a parser tweak touch only affected chunks. (Optional future `ingest_manifest.json` for diffing without querying Qdrant.)
 
@@ -122,10 +122,18 @@ payload: `drug_name`, `section_type`, `species` (list-valued), `page`.
   species**. `DOGS & CATS:` → list-valued `species:["dog","cat"]` (Qdrant matches if any value
   matches). Safety-critical: a cat must never retrieve a dog's dose, so species is enforced strictly.
   Unrecognized sub-headers → `species:["unspecified"]` + logged to `parse_report.json`.
-- **Prose sections (Uses/Indications, Adverse Effects, Contraindications) → SOFT species signal.**
-  Cross-species prose, not cleanly splittable. Keep the section as one chunk; tag `species`
-  best-effort (mentioned species) and use it to **boost ranking, not hard-exclude** (indications
-  are often shared across species).
+- **Every other (prose) section → SOFT species signal.** This is the general rule for *all*
+  non-Doses sections — not just a few. Cross-species prose, not cleanly splittable: keep the section
+  as one chunk (size-split if long), tag `species` best-effort (mentioned species), and use it to
+  **boost ranking, not hard-exclude** (indications/effects are often shared across species).
+
+**Canonical `section_type` enum** (every chunk is tagged with exactly one; `doses` is the only
+species-split, hard-filtered type — all others follow the prose rule):
+`prescriber_highlights`, `indications`, `contraindications`, `adverse_effects`,
+`reproductive_safety`, `overdose_toxicity`, `drug_interactions`, `pharmacology`,
+`pharmacokinetics`, `monitoring`, `client_information`, `chemistry`, `storage`, `dosage_forms`,
+`doses`. Unrecognized headers → `section_type="other"` + logged to `parse_report.json`.
+Note: `find_contraindications` pulls both `contraindications` **and** `drug_interactions`.
 
 **Retrieval** (`knowledge/`): `retrieve(query, filters)` → metadata-filtered ANN → top-k →
 optional rerank → passages **with citations** (`drug + section + page`). The agent's tools pass
@@ -150,16 +158,30 @@ Pure, framework-agnostic, individually unit-tested. Typed (pydantic) I/O.
 |---|---|---|
 | `retrieve_monograph` | `(query, drug?, section?, species?) → list[Passage]` | Metadata-filtered ANN + optional rerank. `Passage` carries `drug, section, species, page, text`. |
 | `extract_dose_rule` | `(passage) → DoseRule \| NeedsClarification` | LLM **structured output** over the retrieved passage → `{mg_per_kg, route, frequency, species, indication, dose_range?}`. Returns `NeedsClarification` on ambiguity / multiple regimens. |
-| `calculate_dose` | `(weight_kg, DoseRule) → DoseResult` | **Pure Python, no LLM.** Total dose (+ range), unit-checked. Exhaustively unit-tested. |
+| `calculate_dose` | `(weight_kg, DoseRule) → DoseResult` | **Pure Python, no LLM.** Total dose (+ range), unit-checked. Exhaustively unit-tested. See safe-arithmetic rules below. |
 | `find_contraindications` | `(drug, other_drugs?) → ContraindicationReport` | Contraindications + Drug-Interactions sections; flags interactions with already-given drugs. |
 | `list_indications` | `(drug, species?) → IndicationReport` | Uses/Indications section. |
 
 The seam that makes dosing safe: **only `extract_dose_rule` does LLM reasoning; `calculate_dose`
 is pure code.**
 
+**Safe-arithmetic rules for `calculate_dose`:**
+- It is **not an expression evaluator** — it does fixed arithmetic (`weight × mg_per_kg`) on a
+  validated, structured `DoseRule`. **No `eval`/`exec`/`sympy.sympify` on any LLM-derived string,
+  ever.** (If expression parsing were ever needed, use a restricted AST evaluator such as `asteval`,
+  never raw `eval`.)
+- **`decimal.Decimal`** for arithmetic — avoids float rounding error on medical doses.
+- **`pint`** for units and conversions (kg↔lb, mg↔mcg) so a unit mismatch is structurally impossible.
+- **pydantic** validation on all numeric inputs (non-negative weight, sane physiological bounds).
+
 ## 8. Agent (`agent/`)
 
 - **LangGraph state graph**, Option A: `scope_guardrail → agent_node ⇄ tools → answer_guardrail`.
+- **Agent type:** a **ReAct-style tool-calling agent** — the `agent_node ⇄ ToolNode` loop *is* the
+  reason→act→observe pattern. With Claude's **native tool use** the model emits structured
+  `tool_use` blocks (no free-text scratchpad parsing), the modern evolution of classic ReAct. We
+  build a **custom `StateGraph`** (not the bare `create_react_agent` prebuilt) so we can attach the
+  deterministic guardrail nodes and a typed `AgentState`.
 - **`agent_node`**: Claude with tools bound, looping until grounded. System prompt enforces: always
   retrieve before answering; never compute dose math (call `calculate_dose`); always cite
   drug+section+page; say "I don't know" when retrieval is empty.
@@ -232,6 +254,11 @@ This brainstorm produces the overall design spec plus enough detail to start Pha
 
 - Precomputed structured dose table (query-time extraction instead, for v1).
 - Fine-grained indication-within-species tagging for prose sections.
+- **Reverse lookup** (condition → candidate drugs); v1 retrieval is drug-keyed. New question types
+  are added later as eval cases and debugged if they fail — not pre-designed.
+- **Independent physical scale-out** (Qdrant clustering, a standalone embedding-inference service,
+  autoscaling). The design is decoupled via interfaces + a stateless API and *permits* this, but
+  building it is out of v1 scope.
 - Web/chat UI (FastAPI + CLI only; UI can be added on the existing backend later).
 - Human medicine, non-drug veterinary questions (refused by the scope guardrail).
 - Multi-tenant auth, rate limiting, and other operational concerns beyond the learning goal.
