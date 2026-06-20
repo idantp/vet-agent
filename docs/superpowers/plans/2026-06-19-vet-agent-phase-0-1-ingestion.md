@@ -65,6 +65,7 @@ dependencies = [
     "pydantic-settings>=2.3",
     "pypdf>=4.2",
     "typer>=0.12",
+    "langchain-text-splitters>=1.1.2",
 ]
 
 [dependency-groups]
@@ -1147,7 +1148,7 @@ Rules implemented (from spec §6):
 
 - Doses section → split into one chunk **per species sub-header**; `species` is a hard list (e.g. `["cat","dog"]`).
 - Every other section → one chunk; `species` = best-effort mentions (soft signal), `["all"]` if none found.
-- Long sections (> `MAX_CHARS`) are size-split into multiple chunks with increasing `ordinal`.
+- Long sections (> `DEFAULT_MAX_CHARS`) are size-split into multiple chunks with increasing `ordinal`, using `RecursiveCharacterTextSplitter` (separator hierarchy `\n\n` → `\n` → space, never mid-word). Overlap defaults to 0 (chunks are already structurally bounded; duplicating dose lines is undesirable) but is a configurable knob for later retrieval-eval tuning.
 - `logical_key(chunk)` and `content_hash(chunk)` are deterministic helpers (used for idempotent re-indexing in Phase 2).
 
 - [ ] **Step 1: Write the failing test**
@@ -1235,27 +1236,32 @@ Expected: FAIL with `ModuleNotFoundError`.
 ```python
 import hashlib
 
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 from vet_agent.ingestion.models import Chunk, Monograph, Section, SectionType
 from vet_agent.ingestion.species import detect_species_mentions, parse_species_header
 
 DEFAULT_MAX_CHARS = 1200
+DEFAULT_OVERLAP = 0
 
 
-def _size_split(text: str, max_chars: int) -> list[str]:
-    """Split text into <= max_chars pieces on word boundaries."""
-    words = text.split()
-    pieces: list[str] = []
-    current: list[str] = []
-    length = 0
-    for word in words:
-        if current and length + len(word) + 1 > max_chars:
-            pieces.append(" ".join(current))
-            current, length = [], 0
-        current.append(word)
-        length += len(word) + 1
-    if current:
-        pieces.append(" ".join(current))
-    return pieces or [""]
+def _size_split(text: str, max_chars: int, overlap: int = DEFAULT_OVERLAP) -> list[str]:
+    """Split overlong text on natural separators (paragraph -> line -> word).
+
+    Delegates to RecursiveCharacterTextSplitter, which prefers paragraph then line
+    boundaries before falling back to spaces, so a fallback split never cuts mid-word.
+    Overlap defaults to 0: our chunks are already structurally bounded and duplicating
+    dose lines across chunks is undesirable, but the knob is exposed so retrieval eval
+    (Phase 6) can introduce overlap later if it measurably helps.
+    """
+    if not text:
+        return [""]
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=max_chars,
+        chunk_overlap=overlap,
+        separators=["\n\n", "\n", " ", ""],
+    )
+    return splitter.split_text(text) or [""]
 
 
 def _doses_species_groups(text: str) -> list[tuple[list[str], str]]:
@@ -1284,13 +1290,13 @@ def _doses_species_groups(text: str) -> list[tuple[list[str], str]]:
 
 
 def _chunk_section(
-    drug_name: str, book_page: int, section: Section, max_chars: int
+    drug_name: str, book_page: int, section: Section, max_chars: int, overlap: int
 ) -> list[Chunk]:
     if section.section_type == SectionType.DOSES:
         chunks: list[Chunk] = []
         ordinal = 0
         for species, text in _doses_species_groups(section.text):
-            for piece in _size_split(text, max_chars):
+            for piece in _size_split(text, max_chars, overlap):
                 chunks.append(
                     Chunk(
                         drug_name=drug_name,
@@ -1314,15 +1320,19 @@ def _chunk_section(
             text=piece,
             ordinal=ordinal,
         )
-        for ordinal, piece in enumerate(_size_split(section.text, max_chars))
+        for ordinal, piece in enumerate(_size_split(section.text, max_chars, overlap))
     ]
 
 
-def chunk_monograph(mono: Monograph, max_chars: int = DEFAULT_MAX_CHARS) -> list[Chunk]:
+def chunk_monograph(
+    mono: Monograph, max_chars: int = DEFAULT_MAX_CHARS, overlap: int = DEFAULT_OVERLAP
+) -> list[Chunk]:
     """Produce structure-aware chunks for one monograph."""
     chunks: list[Chunk] = []
     for section in mono.sections:
-        chunks.extend(_chunk_section(mono.drug_name, mono.book_page, section, max_chars))
+        chunks.extend(
+            _chunk_section(mono.drug_name, mono.book_page, section, max_chars, overlap)
+        )
     return chunks
 
 
