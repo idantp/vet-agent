@@ -682,6 +682,8 @@ git commit -m "feat: add PDF page-text cleaning"
 `tests/ingestion/test_toc.py`:
 
 ```python
+import logging
+
 from vet_agent.ingestion.toc import parse_toc_lines
 
 
@@ -703,6 +705,16 @@ def test_ignores_non_entry_lines():
     entries = parse_toc_lines(lines)
     # "Preface vii" has no integer page -> skipped; heading skipped
     assert [e.drug_name for e in entries] == ["Metronidazole"]
+
+
+def test_logs_success_count_and_skipped_lines(caplog):
+    lines = ["Table of Contents", "Preface vii", "Metronidazole 873", ""]
+    with caplog.at_level(logging.DEBUG, logger="vet_agent.ingestion.toc"):
+        parse_toc_lines(lines)
+    # INFO summary with the success count, and a DEBUG line per failed parse.
+    assert "Parsed 1 TOC entries" in caplog.text
+    assert "Skipping non-entry TOC line" in caplog.text
+    assert "Preface vii" in caplog.text  # the failing line is named
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -715,37 +727,52 @@ Expected: FAIL with `ModuleNotFoundError`.
 `src/vet_agent/ingestion/toc.py`:
 
 ```python
+import logging
 import re
 
 from vet_agent.ingestion.models import TocEntry
+
+logger = logging.getLogger(__name__)
 
 # "<Drug Name> <page>" — name may contain letters, spaces, slashes, hyphens, parens.
 _TOC_LINE_RE = re.compile(r"^(?P<name>[A-Za-z][A-Za-z0-9 ,/()'+-]+?)\s+(?P<page>\d{1,4})$")
 
 
 def parse_toc_lines(lines: list[str]) -> list[TocEntry]:
-    """Parse '<Drug> <page>' table-of-contents lines into TocEntry objects."""
+    """Parse '<Drug> <page>' table-of-contents lines into TocEntry objects.
+
+    Blank lines are ignored silently. Every non-blank line that fails to parse is
+    logged at DEBUG (with the offending text); a single INFO summary reports how many
+    entries parsed and how many lines were skipped.
+    """
     entries: list[TocEntry] = []
+    skipped = 0
     for line in lines:
-        m = _TOC_LINE_RE.match(line.strip())
+        stripped = line.strip()
+        if not stripped:
+            continue
+        m = _TOC_LINE_RE.match(stripped)
         if not m:
+            skipped += 1
+            logger.debug("Skipping non-entry TOC line: %r", stripped)
             continue
         entries.append(
             TocEntry(drug_name=m.group("name").strip(), book_page=int(m.group("page")))
         )
+    logger.info("Parsed %d TOC entries (%d non-blank lines skipped)", len(entries), skipped)
     return entries
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `uv run pytest tests/ingestion/test_toc.py -v`
-Expected: PASS (2 passed).
+Expected: PASS (3 passed).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add src/vet_agent/ingestion/toc.py tests/ingestion/test_toc.py
-git commit -m "feat: add table-of-contents parsing"
+git commit -m "feat: add table-of-contents parsing with diagnostic logging"
 ```
 
 ---
@@ -1525,6 +1552,7 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'vet_agent.cli'`.
 `src/vet_agent/cli/main.py`:
 
 ```python
+import logging
 from pathlib import Path
 
 import typer
@@ -1542,8 +1570,13 @@ def ingest(
     toc_start: int = typer.Option(19, help="First page index (0-based) of the TOC"),
     toc_end: int = typer.Option(27, help="Last page index (0-based) of the TOC"),
     out_dir: Path = typer.Option(Path("data/ingest"), help="Output directory"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show DEBUG logs"),
 ) -> None:
     """Parse the PDF into monographs + chunks and write artifacts."""
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
     if not pdf.exists():
         typer.echo(f"Error: PDF not found at {pdf}")
         raise typer.Exit(code=1)
