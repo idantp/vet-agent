@@ -15,6 +15,7 @@
 ## File Structure
 
 **Phase 0 (scaffold):**
+
 - `pyproject.toml` — project metadata, deps, ruff/mypy/pytest config
 - `Makefile` — `install`, `lint`, `typecheck`, `test`, `check` targets
 - `docker-compose.yml` — Qdrant service (config only; used in Phase 2)
@@ -25,6 +26,7 @@
 - `tests/test_smoke.py`
 
 **Phase 1 (ingestion) — all under `src/vet_agent/ingestion/`:**
+
 - `models.py` — `SectionType` enum, `TocEntry`, `Section`, `Monograph`, `Chunk`, `ParseReport`
 - `species.py` — canonical species vocab, `parse_species_header`, `detect_species_mentions`
 - `pdf_reader.py` — `clean_page_text`, `extract_pages`
@@ -45,6 +47,7 @@
 ### Task 0.1: Initialize uv project and package skeleton
 
 **Files:**
+
 - Create: `pyproject.toml`
 - Create: `src/vet_agent/__init__.py`
 - Create: `tests/test_smoke.py`
@@ -140,6 +143,7 @@ git commit -m "chore: scaffold uv project with src layout and smoke test"
 ### Task 0.2: Settings via pydantic-settings
 
 **Files:**
+
 - Create: `src/vet_agent/config.py`
 - Create: `.env.example`
 - Test: `tests/test_config.py`
@@ -232,6 +236,7 @@ git commit -m "feat: add pydantic-settings configuration"
 ### Task 0.3: Makefile and quality gates
 
 **Files:**
+
 - Create: `Makefile`
 
 - [ ] **Step 1: Create the Makefile**
@@ -279,6 +284,7 @@ git commit -m "chore: add Makefile quality gates (lint, typecheck, test)"
 ### Task 0.4: Qdrant docker-compose (config only, for Phase 2)
 
 **Files:**
+
 - Create: `docker-compose.yml`
 
 - [ ] **Step 1: Create `docker-compose.yml`**
@@ -316,6 +322,7 @@ git commit -m "chore: add Qdrant docker-compose service for Phase 2"
 ### Task 1.1: Ingestion domain models
 
 **Files:**
+
 - Create: `src/vet_agent/ingestion/__init__.py`
 - Create: `src/vet_agent/ingestion/models.py`
 - Test: `tests/ingestion/__init__.py`, `tests/ingestion/test_models.py`
@@ -367,8 +374,15 @@ def test_chunk_defaults():
 
 
 def test_parse_report_counts():
-    r = ParseReport(drugs_parsed=2, anomalies=[{"drug": "X", "issue": "no sections"}])
+    r = ParseReport(
+        toc_entries=3,
+        drugs_parsed=2,
+        missing_headings=["Lost Drug"],
+        anomalies=[{"drug": "X", "issue": "no sections"}],
+    )
+    assert r.toc_entries == 3
     assert r.drugs_parsed == 2
+    assert r.missing_headings == ["Lost Drug"]
     assert r.anomalies[0]["drug"] == "X"
 ```
 
@@ -449,7 +463,9 @@ class Chunk(BaseModel):
 
 
 class ParseReport(BaseModel):
+    toc_entries: int = 0
     drugs_parsed: int = 0
+    missing_headings: list[str] = Field(default_factory=list)
     anomalies: list[dict[str, str]] = Field(default_factory=list)
 ```
 
@@ -470,6 +486,7 @@ git commit -m "feat: add ingestion domain models"
 ### Task 1.2: Species vocabulary and parsing
 
 **Files:**
+
 - Create: `src/vet_agent/ingestion/species.py`
 - Test: `tests/ingestion/test_species.py`
 
@@ -586,6 +603,7 @@ git commit -m "feat: add species vocabulary and header parsing"
 ### Task 1.3: PDF page-text cleaning
 
 **Files:**
+
 - Create: `src/vet_agent/ingestion/pdf_reader.py`
 - Test: `tests/ingestion/test_pdf_reader.py`
 
@@ -674,6 +692,7 @@ git commit -m "feat: add PDF page-text cleaning"
 ### Task 1.4: Table-of-contents parsing
 
 **Files:**
+
 - Create: `src/vet_agent/ingestion/toc.py`
 - Test: `tests/ingestion/test_toc.py`
 
@@ -780,6 +799,7 @@ git commit -m "feat: add table-of-contents parsing with diagnostic logging"
 ### Task 1.5: Section splitting (sectionizer)
 
 **Files:**
+
 - Create: `src/vet_agent/ingestion/sectionizer.py`
 - Test: `tests/ingestion/test_sectionizer.py`
 
@@ -918,6 +938,7 @@ git commit -m "feat: add section splitting with canonical header map"
 ### Task 1.6: Monograph segmentation
 
 **Files:**
+
 - Create: `src/vet_agent/ingestion/segmenter.py`
 - Test: `tests/ingestion/test_segmenter.py`
 
@@ -947,22 +968,27 @@ def test_segments_two_drugs_in_order():
         TocEntry(drug_name="Metronidazole", book_page=873),
         TocEntry(drug_name="Midazolam", book_page=880),
     ]
-    blocks = segment_monographs(text, toc)
+    result = segment_monographs(text, toc)
+    blocks = result.blocks
     assert [b.drug_name for b in blocks] == ["Metronidazole", "Midazolam"]
     assert "Treats Giardia." in blocks[0].body
     assert "Treats Giardia." not in blocks[1].body
     assert "A benzodiazepine." in blocks[1].body
     assert blocks[0].book_page == 873
+    assert result.missing == []
 
 
-def test_missing_drug_heading_is_skipped(caplog):
+def test_missing_drug_heading_is_reported():
     text = "Metronidazole\nUses/Indications\nTreats Giardia."
     toc = [
         TocEntry(drug_name="Metronidazole", book_page=873),
         TocEntry(drug_name="Nonexistent Drug", book_page=999),
     ]
-    blocks = segment_monographs(text, toc)
-    assert [b.drug_name for b in blocks] == ["Metronidazole"]
+    result = segment_monographs(text, toc)
+    # Located drugs are returned as blocks; unlocated ones are surfaced in `missing`
+    # (returned as data, NOT silently dropped) so the caller can enforce a policy.
+    assert [b.drug_name for b in result.blocks] == ["Metronidazole"]
+    assert [e.drug_name for e in result.missing] == ["Nonexistent Drug"]
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -988,6 +1014,11 @@ class MonographBlock(BaseModel):
     body: str
 
 
+class SegmentationResult(BaseModel):
+    blocks: list[MonographBlock]
+    missing: list[TocEntry]
+
+
 def _heading_index(text: str, drug_name: str, start: int) -> int | None:
     """Find the offset of a line that is exactly the drug name, at/after `start`."""
     pattern = re.compile(rf"^{re.escape(drug_name)}\s*$", re.MULTILINE)
@@ -995,17 +1026,20 @@ def _heading_index(text: str, drug_name: str, start: int) -> int | None:
     return m.start() if m else None
 
 
-def segment_monographs(text: str, toc: list[TocEntry]) -> list[MonographBlock]:
+def segment_monographs(text: str, toc: list[TocEntry]) -> SegmentationResult:
     """Slice the full book text into per-drug blocks following TOC order.
 
-    Each drug's block runs from its heading line up to the next found heading.
-    Drugs whose heading cannot be located are skipped.
+    Each drug's block runs from its heading line up to the next found heading. This is
+    a pure transformation: drugs whose heading cannot be located are returned in
+    `missing` (errors-as-values), leaving coverage policy to the orchestration layer.
     """
     located: list[tuple[TocEntry, int]] = []
+    missing: list[TocEntry] = []
     cursor = 0
     for entry in toc:
         idx = _heading_index(text, entry.drug_name, cursor)
         if idx is None:
+            missing.append(entry)
             continue
         located.append((entry, idx))
         cursor = idx + len(entry.drug_name)
@@ -1017,7 +1051,7 @@ def segment_monographs(text: str, toc: list[TocEntry]) -> list[MonographBlock]:
         blocks.append(
             MonographBlock(drug_name=entry.drug_name, book_page=entry.book_page, body=body)
         )
-    return blocks
+    return SegmentationResult(blocks=blocks, missing=missing)
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -1037,6 +1071,7 @@ git commit -m "feat: add monograph segmentation by TOC order"
 ### Task 1.7: Monograph builder
 
 **Files:**
+
 - Create: `src/vet_agent/ingestion/builder.py`
 - Test: `tests/ingestion/test_builder.py`
 
@@ -1104,10 +1139,12 @@ git commit -m "feat: add monograph builder"
 ### Task 1.8: Chunker (section/species chunks)
 
 **Files:**
+
 - Create: `src/vet_agent/ingestion/chunker.py`
 - Test: `tests/ingestion/test_chunker.py`
 
 Rules implemented (from spec §6):
+
 - Doses section → split into one chunk **per species sub-header**; `species` is a hard list (e.g. `["cat","dog"]`).
 - Every other section → one chunk; `species` = best-effort mentions (soft signal), `["all"]` if none found.
 - Long sections (> `MAX_CHARS`) are size-split into multiple chunks with increasing `ordinal`.
@@ -1318,6 +1355,7 @@ git commit -m "feat: add structure-aware chunker with species rules"
 ### Task 1.9: Parse report + artifact writer
 
 **Files:**
+
 - Create: `src/vet_agent/ingestion/report.py`
 - Test: `tests/ingestion/test_report.py`
 
@@ -1328,7 +1366,7 @@ git commit -m "feat: add structure-aware chunker with species rules"
 ```python
 import json
 
-from vet_agent.ingestion.models import Monograph, Section, SectionType
+from vet_agent.ingestion.models import Monograph, Section, SectionType, TocEntry
 from vet_agent.ingestion.report import build_parse_report, write_artifacts
 
 
@@ -1343,15 +1381,25 @@ def _monos() -> list[Monograph]:
     ]
 
 
-def test_build_parse_report_flags_empty_monographs():
-    report = build_parse_report(_monos())
+def _toc() -> list[TocEntry]:
+    return [
+        TocEntry(drug_name="Metronidazole", book_page=873),
+        TocEntry(drug_name="Empty Drug", book_page=900),
+        TocEntry(drug_name="Lost Drug", book_page=950),
+    ]
+
+
+def test_build_parse_report_records_coverage_empty_and_missing():
+    report = build_parse_report(_monos(), toc=_toc(), missing=[_toc()[2]])
+    assert report.toc_entries == 3
     assert report.drugs_parsed == 2
+    assert report.missing_headings == ["Lost Drug"]
     assert any(a["drug"] == "Empty Drug" for a in report.anomalies)
 
 
 def test_write_artifacts_writes_files(tmp_path):
     monos = _monos()
-    report = build_parse_report(monos)
+    report = build_parse_report(monos, toc=_toc(), missing=[])
     write_artifacts(monos, report, out_dir=tmp_path)
 
     report_data = json.loads((tmp_path / "parse_report.json").read_text())
@@ -1374,17 +1422,24 @@ Expected: FAIL with `ModuleNotFoundError`.
 import json
 from pathlib import Path
 
-from vet_agent.ingestion.models import Monograph, ParseReport
+from vet_agent.ingestion.models import Monograph, ParseReport, TocEntry
 
 
-def build_parse_report(monographs: list[Monograph]) -> ParseReport:
-    """Summarize an ingestion run and flag monographs with no parsed sections."""
+def build_parse_report(
+    monographs: list[Monograph], toc: list[TocEntry], missing: list[TocEntry]
+) -> ParseReport:
+    """Summarize an ingestion run: TOC coverage, unlocated headings, empty monographs."""
     anomalies: list[dict[str, str]] = [
         {"drug": m.drug_name, "issue": "no sections parsed"}
         for m in monographs
         if not m.sections
     ]
-    return ParseReport(drugs_parsed=len(monographs), anomalies=anomalies)
+    return ParseReport(
+        toc_entries=len(toc),
+        drugs_parsed=len(monographs),
+        missing_headings=[e.drug_name for e in missing],
+        anomalies=anomalies,
+    )
 
 
 def write_artifacts(
@@ -1415,6 +1470,7 @@ git commit -m "feat: add parse report and artifact writer"
 ### Task 1.10: Pipeline orchestration
 
 **Files:**
+
 - Create: `src/vet_agent/ingestion/pipeline.py`
 - Test: `tests/ingestion/test_pipeline.py`
 
@@ -1439,7 +1495,9 @@ def test_run_ingestion_end_to_end():
     monographs, chunks, report = run_ingestion(pages, toc_page_range=(0, 0))
 
     assert [m.drug_name for m in monographs] == ["Metronidazole", "Midazolam"]
+    assert report.toc_entries == 2
     assert report.drugs_parsed == 2
+    assert report.missing_headings == []
 
     dose_chunks = [c for c in chunks if c.section_type == SectionType.DOSES]
     assert dose_chunks[0].species == ["dog"]
@@ -1456,12 +1514,16 @@ Expected: FAIL with `ModuleNotFoundError`.
 `src/vet_agent/ingestion/pipeline.py`:
 
 ```python
+import logging
+
 from vet_agent.ingestion.builder import build_monograph
 from vet_agent.ingestion.chunker import chunk_monograph
 from vet_agent.ingestion.models import Chunk, Monograph, ParseReport
 from vet_agent.ingestion.report import build_parse_report
 from vet_agent.ingestion.segmenter import segment_monographs
 from vet_agent.ingestion.toc import parse_toc_lines
+
+logger = logging.getLogger(__name__)
 
 
 def run_ingestion(
@@ -1470,6 +1532,8 @@ def run_ingestion(
     """Run the full ingestion chain over already-extracted page text.
 
     toc_page_range is an inclusive (start, end) range of page indices holding the TOC.
+    Unlocated drug headings are logged (WARNING) and recorded in the report; the
+    coverage policy (fail-or-not) is enforced by the caller (CLI), not here.
     """
     start, end = toc_page_range
     toc_lines: list[str] = []
@@ -1478,14 +1542,27 @@ def run_ingestion(
     toc = parse_toc_lines(toc_lines)
 
     body_text = "\n".join(pages[end + 1 :])
-    blocks = segment_monographs(body_text, toc)
-    monographs = [build_monograph(b) for b in blocks]
+    segmentation = segment_monographs(body_text, toc)
+    for entry in segmentation.missing:
+        logger.warning(
+            "Could not locate heading for TOC drug: %s (p.%d)",
+            entry.drug_name,
+            entry.book_page,
+        )
+    monographs = [build_monograph(b) for b in segmentation.blocks]
 
     chunks: list[Chunk] = []
     for mono in monographs:
         chunks.extend(chunk_monograph(mono))
 
-    report = build_parse_report(monographs)
+    report = build_parse_report(monographs, toc=toc, missing=segmentation.missing)
+    logger.info(
+        "Ingestion: located %d/%d TOC drugs, %d missing, %d chunks",
+        report.drugs_parsed,
+        report.toc_entries,
+        len(report.missing_headings),
+        len(chunks),
+    )
     return monographs, chunks, report
 ```
 
@@ -1506,6 +1583,7 @@ git commit -m "feat: add ingestion pipeline orchestration"
 ### Task 1.11: Typer CLI `ingest` command + real-PDF verification
 
 **Files:**
+
 - Create: `src/vet_agent/cli/__init__.py`
 - Create: `src/vet_agent/cli/main.py`
 - Modify: `pyproject.toml` (add `[project.scripts]`)
@@ -1570,6 +1648,12 @@ def ingest(
     toc_start: int = typer.Option(19, help="First page index (0-based) of the TOC"),
     toc_end: int = typer.Option(27, help="Last page index (0-based) of the TOC"),
     out_dir: Path = typer.Option(Path("data/ingest"), help="Output directory"),
+    max_missing: int = typer.Option(
+        0,
+        help="Max TOC drugs allowed with no located heading before the run fails. "
+        "Defaults to 0 (zero tolerance) — a medical reference must not lose drugs. "
+        "Raise only for local iteration while fixing the parser.",
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show DEBUG logs"),
 ) -> None:
     """Parse the PDF into monographs + chunks and write artifacts."""
@@ -1584,12 +1668,25 @@ def ingest(
     typer.echo(f"Reading {pdf} ...")
     pages = extract_pages(pdf)
     monographs, chunks, report = run_ingestion(pages, toc_page_range=(toc_start, toc_end))
-    write_artifacts(monographs, report, out_dir=out_dir)
 
+    # Always write artifacts first, so parse_report.json (with missing_headings) is
+    # available for inspection even when the coverage gate below fails the run.
+    write_artifacts(monographs, report, out_dir=out_dir)
     typer.echo(
-        f"Parsed {report.drugs_parsed} monographs, {len(chunks)} chunks, "
-        f"{len(report.anomalies)} anomalies. Artifacts -> {out_dir}"
+        f"Parsed {report.drugs_parsed}/{report.toc_entries} TOC drugs, {len(chunks)} chunks, "
+        f"{len(report.missing_headings)} missing headings, {len(report.anomalies)} anomalies. "
+        f"Artifacts -> {out_dir}"
     )
+
+    # Coverage gate: fail loudly if too many TOC drugs could not be located.
+    if len(report.missing_headings) > max_missing:
+        typer.echo(
+            f"Error: {len(report.missing_headings)} TOC drugs had no located heading "
+            f"(allowed: {max_missing}). See 'missing_headings' in "
+            f"{out_dir / 'parse_report.json'}. Fix the parser, or pass --max-missing "
+            f"to proceed during local iteration."
+        )
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
@@ -1622,15 +1719,22 @@ Expected: ruff clean, mypy `Success`, all pytest tests passing.
 
 - [ ] **Step 8: Real-PDF verification run (manual)**
 
-Run: `uv run vet-agent ingest plumbs-veterinary-drug-handbook-10_compress.pdf`
+First run (expect it to FAIL the coverage gate until the parser is tuned — that's intended):
 
-Expected: completes and prints a summary like `Parsed 700+ monographs, several thousand chunks, N anomalies`.
+Run: `uv run vet-agent ingest plumbs-veterinary-drug-handbook-10_compress.pdf --verbose`
 
-Then inspect the artifacts to validate quality (this is the Phase-1 acceptance check):
-- `data/ingest/parse_report.json` — `drugs_parsed` should be in the high hundreds (spec: 738+ monographs); skim `anomalies` for systematic failures.
+The default zero-tolerance gate (`--max-missing 0`) will likely exit non-zero on the first run because some TOC drugs won't be located yet. Artifacts are still written first, so inspect them (this is the Phase-1 acceptance check):
+
+- `data/ingest/parse_report.json` — `toc_entries` should be ~738; `drugs_parsed` should equal it; `missing_headings` lists exactly which drugs were not located; skim `anomalies` for monographs with no sections.
 - `data/ingest/monographs.json` — find Metronidazole and confirm its `sections` include `indications`, `contraindications`, `doses`, etc., with sensible text.
 
-If `drugs_parsed` is far below ~700 or many monographs have no sections, the most likely cause is the TOC page range — adjust `--toc-start/--toc-end` (locate the contents pages by skimming early pages of the PDF) and re-run. Record the working range as the new default in `cli/main.py` if it differs.
+Iterate until `missing_headings` is empty (so the gate passes with the default `--max-missing 0`):
+
+- If `toc_entries` itself is wrong or `drugs_parsed` is far below it, the TOC page range is off — adjust `--toc-start/--toc-end` (locate the contents pages by skimming early pages of the PDF) and re-run. Record the working range as the new default in `cli/main.py`.
+- Use the `--verbose` WARNING lines (`Could not locate heading for TOC drug: ...`) to see exactly which names failed and why (e.g. ligatures, trailing page numbers in the heading line, name punctuation differences), and refine `_heading_index` / the TOC name normalization accordingly. Add a regression test for each real-world heading quirk you fix.
+- Use `--max-missing N` only as a temporary escape hatch while iterating; the committed default stays 0.
+
+If the Metronidazole `doses` chunks are NOT split per species (e.g. one chunk tagged `["unspecified"]`), the species sub-headers in the real extraction are not landing on their own line as assumed. Print the raw Doses text for one drug and inspect: if headers appear inline (e.g. `DOGS: 25 mg/kg ...`), relax `_HEADER_RE` in `species.py` to match a leading uppercase species token followed by `:` and split the remainder as the first dose line. Add a regression test with the real-format string before changing the regex.
 
 If the Metronidazole `doses` chunks are NOT split per species (e.g. one chunk tagged `["unspecified"]`), the species sub-headers in the real extraction are not landing on their own line as assumed. Print the raw Doses text for one drug and inspect: if headers appear inline (e.g. `DOGS: 25 mg/kg ...`), relax `_HEADER_RE` in `species.py` to match a leading uppercase species token followed by `:` and split the remainder as the first dose line. Add a regression test with the real-format string before changing the regex.
 
@@ -1638,7 +1742,7 @@ If the Metronidazole `doses` chunks are NOT split per species (e.g. one chunk ta
 
 ```bash
 git add src/vet_agent/cli/ tests/test_cli.py pyproject.toml uv.lock
-git commit -m "feat: add Typer CLI ingest command"
+git commit -m "feat: add Typer CLI ingest command with TOC coverage gate"
 ```
 
 ---
@@ -1647,7 +1751,8 @@ git commit -m "feat: add Typer CLI ingest command"
 
 - `make check` is green (ruff + mypy strict + pytest).
 - `uv run vet-agent ingest <pdf>` parses the real handbook and writes `monographs.json` + `parse_report.json`.
-- `parse_report.json` shows a monograph count in the expected range (hundreds) with no systematic section-parsing failure.
+- The coverage gate passes at the default `--max-missing 0`: `parse_report.json` shows `drugs_parsed == toc_entries` (~738) and `missing_headings` is empty — no drug is silently lost.
+- No systematic section-parsing failure (skim `anomalies`).
 - Spot-check: Metronidazole's monograph has its expected sections, and its Doses chunks are split per species with a hard species list.
 
 ## What's Next (later plans)
@@ -1655,3 +1760,8 @@ git commit -m "feat: add Typer CLI ingest command"
 - **Phase 2 — Knowledge layer:** `Embedder`/`Reranker`/`VectorStore` interfaces, embed chunks, idempotent load into Qdrant using `logical_key`/`content_hash` (already defined here).
 - **Phase 3 — Tools:** `retrieve_monograph`, `extract_dose_rule`, pure-Python `calculate_dose` (Decimal + pint), `find_contraindications`, `list_indications`.
 - **Phases 4–8:** LangGraph agent + guardrails, FastAPI/CLI, eval harness, Langfuse observability, Docker/CI hardening.
+
+## Known v1 limitations (deferred by decision)
+
+- **Approximate page citations.** Every chunk is tagged with its monograph's TOC start `book_page`, so a citation can be off by a few pages within a long monograph (a dose on p.875 may cite p.873). Accepted for v1; exact per-chunk page provenance (carrying `list[(page_number, text)]` through `pdf_reader` → `segmenter` → `chunker`) is a planned later refinement, since precise "see p.N" citations matter for a clinical tool.
+
