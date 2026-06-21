@@ -38,6 +38,13 @@ def split_sections(body: str) -> list[Section]:
     """Split a monograph body into labeled sections at known header lines.
 
     Text appearing before the first recognized header (the drug intro) is dropped.
+    Sections whose body is empty (e.g. two recognized headers back-to-back) are not
+    emitted, so no empty Section reaches the chunker.
+
+    Limitation: detection is purely by line text, so a body line that happens to
+    normalize exactly to a known header string would be treated as a new section
+    boundary. Real monograph bodies don't put a bare header string on its own line,
+    but this is the trade-off of line-based detection without font/position signals.
     """
     sections: list[Section] = []
     current_type: SectionType | None = None
@@ -45,8 +52,10 @@ def split_sections(body: str) -> list[Section]:
 
     def flush() -> None:
         if current_type is not None:
-            ct = current_type
-            sections.append(Section(section_type=ct, text="\n".join(buffer).strip()))
+            text = "\n".join(buffer).strip()
+            if text:
+                ct = current_type
+                sections.append(Section(section_type=ct, text=text))
 
     for line in body.split("\n"):
         header_type = HEADER_TO_SECTION.get(normalize_header(line))

@@ -36,3 +36,11 @@ def test_unknown_header_is_not_treated_as_section():
     sections = split_sections(body)
     assert [s.section_type for s in sections] == [SectionType.INDICATIONS]
     assert sections[0].text == "Real content."
+
+
+def test_consecutive_headers_with_no_body_emit_no_empty_section():
+    # Two recognized headers back-to-back must not produce a Section(text="").
+    body = "Monitoring\nClient Information\nSome real text."
+    sections = split_sections(body)
+    assert [s.section_type for s in sections] == [SectionType.CLIENT_INFORMATION]
+    assert sections[0].text == "Some real text."
