@@ -30,7 +30,7 @@ _HEADER_RE = re.compile(r"^[A-Z][A-Z &/]{0,40}:$")
 
 
 def _canonical_tokens(text: str) -> list[str]:
-    tokens = re.findall(r"[A-Za-z]+", text.lower())
+    tokens = re.findall(r"[a-z]+", text.lower())
     found = {_SPECIES_SYNONYMS[t] for t in tokens if t in _SPECIES_SYNONYMS}
     return sorted(found)
 

@@ -8,6 +8,8 @@ def test_parse_single_species_header():
     assert parse_species_header("DOGS:") == ["dog"]
     assert parse_species_header("CATS:") == ["cat"]
     assert parse_species_header("HORSES:") == ["horse"]
+    assert parse_species_header("CATTLE:") == ["cattle"]
+    assert parse_species_header("SWINE:") == ["swine"]
 
 
 def test_parse_combined_species_header():
