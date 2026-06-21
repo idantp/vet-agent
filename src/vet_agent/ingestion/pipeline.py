@@ -20,6 +20,8 @@ def run_ingestion(
     coverage policy (fail-or-not) is enforced by the caller (CLI), not here.
     """
     start, end = toc_page_range
+    if start > end:
+        raise ValueError(f"toc_page_range start ({start}) must not exceed end ({end})")
     toc_lines: list[str] = []
     for page in pages[start : end + 1]:
         toc_lines.extend(page.split("\n"))
