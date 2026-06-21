@@ -13,7 +13,7 @@ def test_split_sections_maps_known_headers():
             "Used for Giardia in dogs and cats.",
             "Adverse Effects",
             "Vomiting and lethargy.",
-            "Doses",
+            "Dosages",
             "DOGS: 25 mg/kg PO q12h",
         ]
     )

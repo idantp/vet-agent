@@ -27,8 +27,7 @@ def run_ingestion(
         toc_lines.extend(page.split("\n"))
     toc = parse_toc_lines(toc_lines)
 
-    body_text = "\n".join(pages[end + 1 :])
-    segmentation = segment_monographs(body_text, toc)
+    segmentation = segment_monographs(pages[end + 1 :], toc)
     for entry in segmentation.missing:
         logger.warning(
             "Could not locate heading for TOC drug: %s (p.%d)",

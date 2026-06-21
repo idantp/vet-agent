@@ -30,6 +30,22 @@ def clean_page_text(raw: str) -> str:
     return text.strip()
 
 
+_LEADING_NUM_RE = re.compile(r"^(\d+)\b")
+_TRAILING_NUM_RE = re.compile(r"\b(\d+)$")
+
+
+def detect_book_page(page_text: str) -> int | None:
+    """Parse the printed book-page number from a monograph page's running header.
+
+    Headers alternate by side: even (left) pages read ``"874 Metronidazole"`` (number
+    first) and odd (right) pages read ``"Metronidazole 873"`` (number last). Returns the
+    integer page number, or None for pages with no header number (front matter, etc.).
+    """
+    first = next((ln.strip() for ln in page_text.split("\n") if ln.strip()), "")
+    m = _LEADING_NUM_RE.match(first) or _TRAILING_NUM_RE.search(first)
+    return int(m.group(1)) if m else None
+
+
 def extract_pages(pdf_path: Path) -> list[str]:
     """Return cleaned text for every page of the PDF (index 0 == first page)."""
     reader = PdfReader(pdf_path)

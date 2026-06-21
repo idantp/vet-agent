@@ -13,6 +13,7 @@ class SectionType(StrEnum):
     REPRODUCTIVE_SAFETY = "reproductive_safety"
     OVERDOSE_TOXICITY = "overdose_toxicity"
     DRUG_INTERACTIONS = "drug_interactions"
+    LABORATORY_CONSIDERATIONS = "laboratory_considerations"
     PHARMACOLOGY = "pharmacology"
     PHARMACOKINETICS = "pharmacokinetics"
     MONITORING = "monitoring"

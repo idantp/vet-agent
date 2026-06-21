@@ -1,4 +1,4 @@
-from vet_agent.ingestion.pdf_reader import clean_page_text
+from vet_agent.ingestion.pdf_reader import clean_page_text, detect_book_page
 
 
 def test_dehyphenates_line_wrapped_words():
@@ -26,3 +26,11 @@ def test_preserves_numeric_dose_range_at_hyphen_wrap():
 def test_collapses_excess_blank_lines_including_whitespace_only():
     assert clean_page_text("A\n\n\n\nB") == "A\n\nB"
     assert clean_page_text("section\n  \n  \nmore") == "section\n\nmore"
+
+
+def test_detect_book_page_from_running_headers():
+    # Odd (right) page: number last. Even (left) page: number first.
+    assert detect_book_page("Metronidazole 873\nUses/Indications\nbody") == 873
+    assert detect_book_page("874 Metronidazole\nAdverse Effects\nbody") == 874
+    assert detect_book_page("Front matter with no page number") is None
+    assert detect_book_page("") is None

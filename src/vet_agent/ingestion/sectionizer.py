@@ -12,6 +12,7 @@ HEADER_TO_SECTION: dict[str, SectionType] = {
     "Overdose/Acute Toxicity": SectionType.OVERDOSE_TOXICITY,
     "Overdosage/Acute Toxicity": SectionType.OVERDOSE_TOXICITY,
     "Drug Interactions": SectionType.DRUG_INTERACTIONS,
+    "Laboratory Considerations": SectionType.LABORATORY_CONSIDERATIONS,
     "Pharmacology/Actions": SectionType.PHARMACOLOGY,
     "Pharmacokinetics": SectionType.PHARMACOKINETICS,
     "Monitoring": SectionType.MONITORING,
@@ -21,6 +22,8 @@ HEADER_TO_SECTION: dict[str, SectionType] = {
     "Compatibility/Compounding Considerations": SectionType.COMPOUNDING,
     "Dosage Forms/Regulatory Status": SectionType.DOSAGE_FORMS,
     "Dose Forms/Regulatory Status": SectionType.DOSAGE_FORMS,
+    # The real Plumb's dosing header is "Dosages"; "Doses" kept as a defensive alias.
+    "Dosages": SectionType.DOSES,
     "Doses": SectionType.DOSES,
 }
 

@@ -7,11 +7,13 @@ from vet_agent.ingestion.pipeline import run_ingestion
 
 
 def test_run_ingestion_end_to_end():
-    # Page index 0 = TOC; page indices 1-2 = monograph bodies.
+    # Page index 0 = TOC; page indices 1-2 = monograph bodies. Body pages start with
+    # the running header "<Drug> <book_page>" that the segmenter anchors on.
     pages = [
         "Metronidazole 873\nMidazolam 880",
-        "Metronidazole\nUses/Indications\nTreats Giardia in dogs.\nDoses\nDOGS:\n25 mg/kg PO q12h",
-        "Midazolam\nUses/Indications\nA benzodiazepine used in cats.",
+        "Metronidazole 873\nUses/Indications\nTreats Giardia in dogs.\n"
+        "Dosages\nDOGS:\n25 mg/kg PO q12h",
+        "Midazolam 880\nUses/Indications\nA benzodiazepine used in cats.",
     ]
     monographs, chunks, report = run_ingestion(pages, toc_page_range=(0, 0))
 
@@ -29,7 +31,7 @@ def test_missing_heading_is_reported_and_warned(caplog):
     # "Ghostazole" is in the TOC but never appears as a heading in the body pages.
     pages = [
         "Metronidazole 873\nGhostazole 999",
-        "Metronidazole\nUses/Indications\nTreats Giardia in dogs.",
+        "Metronidazole 873\nUses/Indications\nTreats Giardia in dogs.",
     ]
     with caplog.at_level(logging.WARNING, logger="vet_agent.ingestion.pipeline"):
         monographs, _chunks, report = run_ingestion(pages, toc_page_range=(0, 0))
