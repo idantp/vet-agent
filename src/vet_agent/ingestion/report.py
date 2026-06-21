@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from vet_agent.ingestion.models import Monograph, ParseReport, TocEntry
+from vet_agent.ingestion.models import Chunk, Monograph, ParseReport, TocEntry
 
 
 def build_parse_report(
@@ -19,12 +19,17 @@ def build_parse_report(
     )
 
 
-def write_artifacts(monographs: list[Monograph], report: ParseReport, out_dir: Path) -> None:
-    """Write monographs.json and parse_report.json to out_dir."""
+def write_artifacts(
+    monographs: list[Monograph], chunks: list[Chunk], report: ParseReport, out_dir: Path
+) -> None:
+    """Write monographs.json, chunks.json, and parse_report.json to out_dir."""
     out_dir.mkdir(parents=True, exist_ok=True)
     # Explicit UTF-8: monograph text contains non-ASCII (e.g. μ, °, ≈) and the JSON
     # may carry it raw, so don't depend on the platform locale encoding (e.g. in Docker).
     (out_dir / "monographs.json").write_text(
         json.dumps([m.model_dump() for m in monographs], indent=2), encoding="utf-8"
+    )
+    (out_dir / "chunks.json").write_text(
+        json.dumps([c.model_dump() for c in chunks], indent=2), encoding="utf-8"
     )
     (out_dir / "parse_report.json").write_text(report.model_dump_json(indent=2), encoding="utf-8")

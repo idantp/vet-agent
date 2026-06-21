@@ -1,6 +1,6 @@
 import json
 
-from vet_agent.ingestion.models import Monograph, Section, SectionType, TocEntry
+from vet_agent.ingestion.models import Chunk, Monograph, Section, SectionType, TocEntry
 from vet_agent.ingestion.report import build_parse_report, write_artifacts
 
 
@@ -33,11 +33,25 @@ def test_build_parse_report_records_coverage_empty_and_missing():
 
 def test_write_artifacts_writes_files(tmp_path):
     monos = _monos()
+    chunks = [
+        Chunk(
+            drug_name="Metronidazole",
+            section_type=SectionType.DOSES,
+            species=["dog"],
+            book_page=875,
+            text="DOGS: 25 mg/kg",
+            ordinal=0,
+        )
+    ]
     report = build_parse_report(monos, toc=_toc(), missing=[])
-    write_artifacts(monos, report, out_dir=tmp_path)
+    write_artifacts(monos, chunks, report, out_dir=tmp_path)
 
     report_data = json.loads((tmp_path / "parse_report.json").read_text())
     assert report_data["drugs_parsed"] == 2
 
     mono_data = json.loads((tmp_path / "monographs.json").read_text())
     assert mono_data[0]["drug_name"] == "Metronidazole"
+
+    chunk_data = json.loads((tmp_path / "chunks.json").read_text())
+    assert chunk_data[0]["drug_name"] == "Metronidazole"
+    assert chunk_data[0]["species"] == ["dog"]

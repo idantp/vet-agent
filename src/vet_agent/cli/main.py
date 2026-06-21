@@ -35,8 +35,12 @@ def ingest(
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.INFO,
         format="%(levelname)s %(name)s: %(message)s",
+        force=True,
     )
-    if not pdf.exists():
+    if toc_start > toc_end:
+        typer.echo(f"Error: --toc-start ({toc_start}) must not exceed --toc-end ({toc_end})")
+        raise typer.Exit(code=1)
+    if not pdf.is_file():
         typer.echo(f"Error: PDF not found at {pdf}")
         raise typer.Exit(code=1)
 
@@ -46,7 +50,7 @@ def ingest(
 
     # Always write artifacts first, so parse_report.json (with missing_headings) is
     # available for inspection even when the coverage gate below fails the run.
-    write_artifacts(monographs, report, out_dir=out_dir)
+    write_artifacts(monographs, chunks, report, out_dir=out_dir)
     typer.echo(
         f"Parsed {report.drugs_parsed}/{report.toc_entries} TOC drugs, {len(chunks)} chunks, "
         f"{len(report.missing_headings)} missing headings, {len(report.anomalies)} anomalies. "

@@ -16,3 +16,9 @@ def test_ingest_requires_existing_pdf(tmp_path):
     result = runner.invoke(app, ["ingest", str(missing)])
     assert result.exit_code != 0
     assert "not found" in result.stdout.lower()
+
+
+def test_ingest_rejects_inverted_toc_range():
+    result = runner.invoke(app, ["ingest", "x.pdf", "--toc-start", "5", "--toc-end", "2"])
+    assert result.exit_code != 0
+    assert "toc-start" in result.stdout.lower()
