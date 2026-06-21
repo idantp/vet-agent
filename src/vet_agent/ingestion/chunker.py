@@ -3,7 +3,11 @@ import hashlib
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from vet_agent.ingestion.models import Chunk, Monograph, Section, SectionType
-from vet_agent.ingestion.species import detect_species_mentions, parse_species_header
+from vet_agent.ingestion.species import (
+    detect_species_mentions,
+    is_species_header,
+    parse_species_header,
+)
 
 DEFAULT_MAX_CHARS = 1200
 DEFAULT_OVERLAP = 0
@@ -18,14 +22,14 @@ def _size_split(text: str, max_chars: int, overlap: int = DEFAULT_OVERLAP) -> li
     dose lines across chunks is undesirable, but the knob is exposed so retrieval eval
     (Phase 6) can introduce overlap later if it measurably helps.
     """
-    if not text:
-        return [""]
+    if not text.strip():
+        return []
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=max_chars,
         chunk_overlap=overlap,
         separators=["\n\n", "\n", " ", ""],
     )
-    return splitter.split_text(text) or [""]
+    return splitter.split_text(text)
 
 
 def _doses_species_groups(text: str) -> list[tuple[list[str], str]]:
@@ -46,6 +50,12 @@ def _doses_species_groups(text: str) -> list[tuple[list[str], str]]:
         if species:
             flush()
             current_species = species
+            current_lines = []
+        elif is_species_header(line):
+            # Header-shaped but no recognized species (e.g. "AVIANS:") — start a new
+            # 'unspecified' group rather than misattributing its doses to the prior species.
+            flush()
+            current_species = ["unspecified"]
             current_lines = []
         else:
             current_lines.append(line)

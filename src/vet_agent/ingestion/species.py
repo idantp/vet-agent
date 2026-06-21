@@ -43,6 +43,12 @@ def parse_species_header(line: str) -> list[str]:
     return _canonical_tokens(stripped)
 
 
+def is_species_header(line: str) -> bool:
+    """True if the line is shaped like a Doses species sub-header, even when the
+    species token is not in our vocabulary (e.g. ``AVIANS:``, ``RUMINANTS:``)."""
+    return bool(_HEADER_RE.match(line.strip()))
+
+
 def detect_species_mentions(text: str) -> list[str]:
     """Best-effort canonical species mentioned anywhere in prose text."""
     return _canonical_tokens(text)

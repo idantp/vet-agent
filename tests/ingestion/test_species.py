@@ -29,3 +29,12 @@ def test_detect_species_mentions_in_prose():
 
 def test_detect_species_mentions_none():
     assert detect_species_mentions("No specific species discussed.") == []
+
+
+def test_is_species_header_recognizes_shape_even_for_unknown_species():
+    from vet_agent.ingestion.species import is_species_header
+
+    assert is_species_header("AVIANS:") is True
+    assert is_species_header("DOGS:") is True
+    assert is_species_header("Giardiasis (extra-label):") is False
+    assert is_species_header("25 mg/kg PO q12h") is False

@@ -59,8 +59,38 @@ def test_long_section_is_size_split_with_ordinals():
     assert [c.ordinal for c in chunks] == list(range(len(chunks)))
 
 
-def test_logical_key_and_content_hash_are_deterministic():
-    chunk = chunk_monograph(_mono())[0]
-    assert logical_key(chunk) == logical_key(chunk)
-    assert content_hash(chunk) == content_hash(chunk)
-    assert "metronidazole" in logical_key(chunk).lower()
+def test_logical_key_and_content_hash_are_deterministic_and_distinct():
+    chunks = chunk_monograph(_mono())
+    first = chunks[0]
+    # deterministic
+    assert logical_key(first) == logical_key(first)
+    assert content_hash(first) == content_hash(first)
+    assert "metronidazole" in logical_key(first).lower()
+    # distinct chunks within a monograph have distinct keys
+    keys = [logical_key(c) for c in chunks]
+    assert len(keys) == len(set(keys))
+    # changing text changes the hash (key held constant)
+    mutated = first.model_copy(update={"text": first.text + " EXTRA"})
+    assert content_hash(mutated) != content_hash(first)
+
+
+def test_unknown_species_header_not_misattributed_to_prior_species():
+    doses = "DOGS:\n25 mg/kg PO q12h\nAVIANS:\n10 mg/kg PO q24h"
+    mono = Monograph(
+        drug_name="X",
+        book_page=1,
+        sections=[Section(section_type=SectionType.DOSES, text=doses)],
+    )
+    chunks = chunk_monograph(mono)
+    dog = next(c for c in chunks if c.species == ["dog"])
+    assert "10 mg/kg PO q24h" not in dog.text  # avian dose must NOT become a dog dose
+    assert any(c.species == ["unspecified"] and "10 mg/kg PO q24h" in c.text for c in chunks)
+
+
+def test_empty_section_yields_no_chunks():
+    mono = Monograph(
+        drug_name="X",
+        book_page=1,
+        sections=[Section(section_type=SectionType.STORAGE, text="   ")],
+    )
+    assert chunk_monograph(mono) == []
