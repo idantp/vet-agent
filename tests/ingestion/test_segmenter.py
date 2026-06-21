@@ -38,3 +38,20 @@ def test_missing_drug_heading_is_reported():
     # (returned as data, NOT silently dropped) so the caller can enforce a policy.
     assert [b.drug_name for b in result.blocks] == ["Metronidazole"]
     assert [e.drug_name for e in result.missing] == ["Nonexistent Drug"]
+
+
+def test_text_without_a_located_heading_is_absorbed_into_preceding_block():
+    # Only TOC headings located in the text create boundaries. A drug that is in the
+    # TOC but absent from the text goes to `missing`; text whose heading is not a
+    # boundary (e.g. it has no TOC entry) is absorbed into the preceding block.
+    text = "DrugA\nbody A\nDrugB\nbody B\nDrugC\nbody C"
+    toc = [
+        TocEntry(drug_name="DrugA", book_page=1),
+        TocEntry(drug_name="MISSING", book_page=2),
+        TocEntry(drug_name="DrugC", book_page=3),
+    ]
+    result = segment_monographs(text, toc)
+    assert [e.drug_name for e in result.missing] == ["MISSING"]
+    assert "body B" in result.blocks[0].body  # DrugB (no boundary) absorbed into DrugA
+    assert result.blocks[1].drug_name == "DrugC"
+    assert result.blocks[1].body == "body C"
