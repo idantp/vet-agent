@@ -11,6 +11,9 @@ dependencies = [
     "langchain-text-splitters>=1.1.2",
 ]
 
+[project.scripts]
+vet-agent = "vet_agent.cli.main:app"
+
 [dependency-groups]
 dev = [
     "pytest>=8.2",
