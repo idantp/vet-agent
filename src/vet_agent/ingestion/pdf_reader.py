@@ -3,7 +3,10 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
-_HYPHEN_WRAP_RE = re.compile(r"-\n")
+# Only de-hyphenate when the continuation starts with a lowercase letter — this joins
+# soft-wrapped words ("metroni-\ndazole") while preserving numeric dose ranges that
+# wrap at a hyphen (e.g. "(8.1-\n25 lb)" must NOT become "(8.125 lb)").
+_HYPHEN_WRAP_RE = re.compile(r"-\n([a-z])")
 _MULTISPACE_RE = re.compile(r"[ \t]+")
 _MULTINEWLINE_RE = re.compile(r"\n{3,}")
 
@@ -17,14 +20,17 @@ def clean_page_text(raw: str) -> str:
     """
     if not raw:
         return ""
-    text = _HYPHEN_WRAP_RE.sub("", raw)
+    text = _HYPHEN_WRAP_RE.sub(r"\1", raw)
     text = _MULTISPACE_RE.sub(" ", text)
-    text = _MULTINEWLINE_RE.sub("\n\n", text)
+    # Strip each line BEFORE collapsing blank lines, so whitespace-only lines
+    # (reduced to a single space above) don't defeat the blank-line cap.
     lines = [ln.strip() for ln in text.split("\n")]
-    return "\n".join(lines).strip()
+    text = "\n".join(lines)
+    text = _MULTINEWLINE_RE.sub("\n\n", text)
+    return text.strip()
 
 
 def extract_pages(pdf_path: Path) -> list[str]:
     """Return cleaned text for every page of the PDF (index 0 == first page)."""
-    reader = PdfReader(str(pdf_path))
+    reader = PdfReader(pdf_path)
     return [clean_page_text(page.extract_text() or "") for page in reader.pages]
