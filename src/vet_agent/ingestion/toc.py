@@ -27,8 +27,6 @@ def parse_toc_lines(lines: list[str]) -> list[TocEntry]:
             skipped += 1
             logger.debug("Skipping non-entry TOC line: %r", stripped)
             continue
-        entries.append(
-            TocEntry(drug_name=m.group("name").strip(), book_page=int(m.group("page")))
-        )
+        entries.append(TocEntry(drug_name=m.group("name").strip(), book_page=int(m.group("page"))))
     logger.info("Parsed %d TOC entries (%d non-blank lines skipped)", len(entries), skipped)
     return entries
