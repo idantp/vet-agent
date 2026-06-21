@@ -50,6 +50,7 @@
 
 - Create: `pyproject.toml`
 - Create: `src/vet_agent/__init__.py`
+- Create: `src/vet_agent/py.typed` (empty marker — required because `[tool.mypy] packages = ["vet_agent"]` type-checks the installed package)
 - Create: `tests/test_smoke.py`
 
 - [ ] **Step 1: Create `pyproject.toml`**
@@ -506,6 +507,8 @@ def test_parse_single_species_header():
     assert parse_species_header("DOGS:") == ["dog"]
     assert parse_species_header("CATS:") == ["cat"]
     assert parse_species_header("HORSES:") == ["horse"]
+    assert parse_species_header("CATTLE:") == ["cattle"]
+    assert parse_species_header("SWINE:") == ["swine"]
 
 
 def test_parse_combined_species_header():
@@ -569,7 +572,7 @@ _HEADER_RE = re.compile(r"^[A-Z][A-Z &/]{0,40}:$")
 
 
 def _canonical_tokens(text: str) -> list[str]:
-    tokens = re.findall(r"[A-Za-z]+", text.lower())
+    tokens = re.findall(r"[a-z]+", text.lower())
     found = {_SPECIES_SYNONYMS[t] for t in tokens if t in _SPECIES_SYNONYMS}
     return sorted(found)
 
@@ -632,6 +635,17 @@ def test_collapses_spaces_and_preserves_line_structure():
 
 def test_strips_empty_input():
     assert clean_page_text("") == ""
+
+
+def test_preserves_numeric_dose_range_at_hyphen_wrap():
+    # A weight range that wraps at a hyphen must NOT have its digits fused.
+    assert clean_page_text("(8.1-\n25 lb)") == "(8.1-\n25 lb)"
+    assert "8.125" not in clean_page_text("(8.1-\n25 lb)")
+
+
+def test_collapses_excess_blank_lines_including_whitespace_only():
+    assert clean_page_text("A\n\n\n\nB") == "A\n\nB"
+    assert clean_page_text("section\n  \n  \nmore") == "section\n\nmore"
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -649,7 +663,10 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
-_HYPHEN_WRAP_RE = re.compile(r"-\n")
+# Only de-hyphenate when the continuation starts with a lowercase letter — this joins
+# soft-wrapped words ("metroni-\ndazole") while preserving numeric dose ranges that
+# wrap at a hyphen (e.g. "(8.1-\n25 lb)" must NOT become "(8.125 lb)").
+_HYPHEN_WRAP_RE = re.compile(r"-\n([a-z])")
 _MULTISPACE_RE = re.compile(r"[ \t]+")
 _MULTINEWLINE_RE = re.compile(r"\n{3,}")
 
@@ -663,23 +680,26 @@ def clean_page_text(raw: str) -> str:
     """
     if not raw:
         return ""
-    text = _HYPHEN_WRAP_RE.sub("", raw)
+    text = _HYPHEN_WRAP_RE.sub(r"\1", raw)
     text = _MULTISPACE_RE.sub(" ", text)
-    text = _MULTINEWLINE_RE.sub("\n\n", text)
+    # Strip each line BEFORE collapsing blank lines, so whitespace-only lines
+    # (reduced to a single space above) don't defeat the blank-line cap.
     lines = [ln.strip() for ln in text.split("\n")]
-    return "\n".join(lines).strip()
+    text = "\n".join(lines)
+    text = _MULTINEWLINE_RE.sub("\n\n", text)
+    return text.strip()
 
 
 def extract_pages(pdf_path: Path) -> list[str]:
     """Return cleaned text for every page of the PDF (index 0 == first page)."""
-    reader = PdfReader(str(pdf_path))
+    reader = PdfReader(pdf_path)
     return [clean_page_text(page.extract_text() or "") for page in reader.pages]
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `uv run pytest tests/ingestion/test_pdf_reader.py -v`
-Expected: PASS (3 passed).
+Expected: PASS (5 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -847,6 +867,14 @@ def test_unknown_header_is_not_treated_as_section():
     sections = split_sections(body)
     assert [s.section_type for s in sections] == [SectionType.INDICATIONS]
     assert sections[0].text == "Real content."
+
+
+def test_consecutive_headers_with_no_body_emit_no_empty_section():
+    # Two recognized headers back-to-back must not produce a Section(text="").
+    body = "Monitoring\nClient Information\nSome real text."
+    sections = split_sections(body)
+    assert [s.section_type for s in sections] == [SectionType.CLIENT_INFORMATION]
+    assert sections[0].text == "Some real text."
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -899,6 +927,13 @@ def split_sections(body: str) -> list[Section]:
     """Split a monograph body into labeled sections at known header lines.
 
     Text appearing before the first recognized header (the drug intro) is dropped.
+    Sections whose body is empty (e.g. two recognized headers back-to-back) are not
+    emitted, so no empty Section reaches the chunker.
+
+    Limitation: detection is purely by line text, so a body line that happens to
+    normalize exactly to a known header string would be treated as a new section
+    boundary. Real monograph bodies don't put a bare header string on its own line,
+    but this is the trade-off of line-based detection without font/position signals.
     """
     sections: list[Section] = []
     current_type: SectionType | None = None
@@ -906,9 +941,10 @@ def split_sections(body: str) -> list[Section]:
 
     def flush() -> None:
         if current_type is not None:
-            sections.append(
-                Section(section_type=current_type, text="\n".join(buffer).strip())
-            )
+            text = "\n".join(buffer).strip()
+            if text:
+                ct = current_type
+                sections.append(Section(section_type=ct, text=text))
 
     for line in body.split("\n"):
         header_type = HEADER_TO_SECTION.get(normalize_header(line))
@@ -925,7 +961,7 @@ def split_sections(body: str) -> list[Section]:
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `uv run pytest tests/ingestion/test_sectionizer.py -v`
-Expected: PASS (4 passed).
+Expected: PASS (5 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -990,6 +1026,23 @@ def test_missing_drug_heading_is_reported():
     # (returned as data, NOT silently dropped) so the caller can enforce a policy.
     assert [b.drug_name for b in result.blocks] == ["Metronidazole"]
     assert [e.drug_name for e in result.missing] == ["Nonexistent Drug"]
+
+
+def test_text_without_a_located_heading_is_absorbed_into_preceding_block():
+    # Only TOC headings located in the text create boundaries. A drug in the TOC but
+    # absent from the text goes to `missing`; text whose heading is not a boundary
+    # (e.g. it has no TOC entry) is absorbed into the preceding block.
+    text = "DrugA\nbody A\nDrugB\nbody B\nDrugC\nbody C"
+    toc = [
+        TocEntry(drug_name="DrugA", book_page=1),
+        TocEntry(drug_name="MISSING", book_page=2),
+        TocEntry(drug_name="DrugC", book_page=3),
+    ]
+    result = segment_monographs(text, toc)
+    assert [e.drug_name for e in result.missing] == ["MISSING"]
+    assert "body B" in result.blocks[0].body  # DrugB (no boundary) absorbed into DrugA
+    assert result.blocks[1].drug_name == "DrugC"
+    assert result.blocks[1].body == "body C"
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1058,7 +1111,7 @@ def segment_monographs(text: str, toc: list[TocEntry]) -> SegmentationResult:
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `uv run pytest tests/ingestion/test_segmenter.py -v`
-Expected: PASS (2 passed).
+Expected: PASS (3 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -1742,6 +1795,7 @@ Iterate until `missing_headings` is empty (so the gate passes with the default `
 
 - If `toc_entries` itself is wrong or `drugs_parsed` is far below it, the TOC page range is off — adjust `--toc-start/--toc-end` (locate the contents pages by skimming early pages of the PDF) and re-run. Record the working range as the new default in `cli/main.py`.
 - Use the `--verbose` WARNING lines (`Could not locate heading for TOC drug: ...`) to see exactly which names failed and why (e.g. ligatures, trailing page numbers in the heading line, name punctuation differences), and refine `_heading_index` / the TOC name normalization accordingly. Add a regression test for each real-world heading quirk you fix.
+- Known `_TOC_LINE_RE` limitation: it requires names to start with a letter (`[A-Za-z]`), so drugs whose name starts with a digit (e.g. `5-Fluorouracil`, `6-Mercaptopurine`) are skipped during TOC parsing. If any such drug shows up in `missing_headings`, broaden the `name` group's first character class (and add a regression test) — but keep the page group anchored so stray numeric lines aren't misparsed as entries.
 - Use `--max-missing N` only as a temporary escape hatch while iterating; the committed default stays 0.
 
 If the Metronidazole `doses` chunks are NOT split per species (e.g. one chunk tagged `["unspecified"]`), the species sub-headers in the real extraction are not landing on their own line as assumed. Print the raw Doses text for one drug and inspect: if headers appear inline (e.g. `DOGS: 25 mg/kg ...`), relax `_HEADER_RE` in `species.py` to match a leading uppercase species token followed by `:` and split the remainder as the first dose line. Add a regression test with the real-format string before changing the regex.

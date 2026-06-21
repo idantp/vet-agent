@@ -15,9 +15,14 @@ def parse_toc_lines(lines: list[str]) -> list[TocEntry]:
     Blank lines are ignored silently. Every non-blank line that fails to parse is
     logged at DEBUG (with the offending text); a single INFO summary reports how many
     entries parsed and how many lines were skipped.
+
+    Duplicate drug names (e.g. from physically repeated TOC pages in the PDF) are
+    deduplicated: the first occurrence wins and subsequent ones are silently dropped.
     """
     entries: list[TocEntry] = []
+    seen_names: set[str] = set()
     skipped = 0
+    duplicates = 0
     for line in lines:
         stripped = line.strip()
         if not stripped:
@@ -27,6 +32,20 @@ def parse_toc_lines(lines: list[str]) -> list[TocEntry]:
             skipped += 1
             logger.debug("Skipping non-entry TOC line: %r", stripped)
             continue
-        entries.append(TocEntry(drug_name=m.group("name").strip(), book_page=int(m.group("page"))))
-    logger.info("Parsed %d TOC entries (%d non-blank lines skipped)", len(entries), skipped)
+        name = m.group("name").strip()
+        if name in seen_names:
+            duplicates += 1
+            logger.debug("Skipping duplicate TOC entry: %r", name)
+            continue
+        seen_names.add(name)
+        entries.append(TocEntry(drug_name=name, book_page=int(m.group("page"))))
+    if duplicates:
+        logger.info(
+            "Parsed %d TOC entries (%d non-blank lines skipped, %d duplicates dropped)",
+            len(entries),
+            skipped,
+            duplicates,
+        )
+    else:
+        logger.info("Parsed %d TOC entries (%d non-blank lines skipped)", len(entries), skipped)
     return entries

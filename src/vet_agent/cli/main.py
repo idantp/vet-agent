@@ -20,8 +20,8 @@ def main() -> None:
 @app.command()
 def ingest(
     pdf: Path = typer.Argument(..., help="Path to the Plumb's handbook PDF"),  # noqa: B008
-    toc_start: int = typer.Option(19, help="First page index (0-based) of the TOC"),  # noqa: B008
-    toc_end: int = typer.Option(27, help="Last page index (0-based) of the TOC"),  # noqa: B008
+    toc_start: int = typer.Option(17, help="First page index (0-based) of the TOC"),  # noqa: B008
+    toc_end: int = typer.Option(23, help="Last page index (0-based) of the TOC"),  # noqa: B008
     out_dir: Path = typer.Option(Path("data/ingest"), help="Output directory"),  # noqa: B008
     max_missing: int = typer.Option(  # noqa: B008
         0,
