@@ -6,9 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Runtime configuration, overridable via VET_-prefixed env vars or .env."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="VET_", env_file=".env", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_prefix="VET_", env_file=".env", extra="ignore")
 
     # LLM
     anthropic_api_key: str | None = None
