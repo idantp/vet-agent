@@ -103,3 +103,24 @@ def test_interpolated_anchor_without_title_stays_missing():
     result = segment_monographs(pages, toc)
     assert [b.drug_name for b in result.blocks] == ["Acepromazine"]
     assert [e.drug_name for e in result.missing] == ["Ophthalmic Agents, Topical"]
+
+
+def test_boundary_drug_with_hyphen_space_name_mismatch_keeps_preceding_tail():
+    # The TOC name 'L- Theanine' (space after the hyphen, an extraction artifact)
+    # differs from the body's 'L-Theanine'. Flexible name matching still locates the
+    # boundary drug by its bare title, so Ketorolac keeps its Dosages on the shared page
+    # instead of being truncated at L-Theanine's page-top running header.
+    pages = [
+        "Ketorolac 732\nUses/Indications\nAn NSAID.",
+        "L-Theanine 733\nDosages\nDOGS: 10 mg/kg\nL-Theanine\nUses/Indications\nA supplement.",
+    ]
+    toc = [
+        TocEntry(drug_name="Ketorolac", book_page=732),
+        TocEntry(drug_name="L- Theanine", book_page=733),
+    ]
+    result = segment_monographs(pages, toc)
+    by = {b.drug_name: b.body for b in result.blocks}
+    assert "Dosages" in by["Ketorolac"]
+    assert "10 mg/kg" in by["Ketorolac"]
+    assert "A supplement." in by["L- Theanine"]
+    assert result.missing == []

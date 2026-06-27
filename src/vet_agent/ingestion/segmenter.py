@@ -22,6 +22,19 @@ class SegmentationResult(BaseModel):
     missing: list[TocEntry]
 
 
+def _flexible_name_pattern(drug_name: str) -> str:
+    """Regex for a drug name tolerant of whitespace/hyphen differences.
+
+    The TOC and the body sometimes disagree on spacing around hyphens (e.g. the TOC
+    reads ``L- Theanine`` while the body reads ``L-Theanine``). Splitting on any run of
+    spaces/hyphens and rejoining with ``[\\s-]+`` matches all such variants, so a
+    boundary drug whose name has this quirk is still located (and doesn't fall back to
+    its page-top anchor, which would truncate the preceding drug's tail).
+    """
+    parts = [re.escape(p) for p in re.split(r"[\s-]+", drug_name.strip()) if p]
+    return r"[\s-]+".join(parts)
+
+
 def _heading_index(text: str, drug_name: str, start: int, end: int) -> int | None:
     """Offset of the monograph-title line for *drug_name* within ``text[start:end]``.
 
@@ -32,14 +45,14 @@ def _heading_index(text: str, drug_name: str, start: int, end: int) -> int | Non
     no bare title is found — otherwise a shared-page running header would truncate the
     preceding drug before its Dosages section.
     """
-    escaped = re.escape(drug_name)
-    bare = re.compile(rf"^{escaped}\s*$", re.MULTILINE)
+    name = _flexible_name_pattern(drug_name)
+    bare = re.compile(rf"^{name}\s*$", re.MULTILINE)
     m = bare.search(text, start, end)
     if m:
         return m.start()
     numbered = (
-        re.compile(rf"^\d+\s+{escaped}\s*$", re.MULTILINE),
-        re.compile(rf"^{escaped}\s+\d+\s*$", re.MULTILINE),
+        re.compile(rf"^\d+\s+{name}\s*$", re.MULTILINE),
+        re.compile(rf"^{name}\s+\d+\s*$", re.MULTILINE),
     )
     candidates = [mm.start() for p in numbered if (mm := p.search(text, start, end))]
     return min(candidates) if candidates else None
