@@ -52,3 +52,24 @@ def test_two_drugs_on_same_page_are_split_by_heading():
     assert "Alpha-glucosidase" in result.blocks[0].body
     assert "Alpha-glucosidase" not in result.blocks[1].body
     assert "beta-blocker" in result.blocks[1].body
+
+
+def test_shared_page_keeps_preceding_drugs_tail_via_bare_title():
+    # The second page is a shared page: its running header names the NEXT drug
+    # (Acetazolamide 9), but the top of the page is the PRECEDING drug's tail
+    # (Acetaminophen's Dosages). Preferring the bare title keeps the tail with
+    # Acetaminophen instead of truncating it at the running header.
+    pages = [
+        "Acetaminophen 7\nUses/Indications\nA pain reliever.",
+        "Acetazolamide 9\nDosages\nDOGS: 10 mg/kg PO\nAcetazolamide\nUses/Indications\nA diuretic.",
+    ]
+    toc = [
+        TocEntry(drug_name="Acetaminophen", book_page=7),
+        TocEntry(drug_name="Acetazolamide", book_page=9),
+    ]
+    result = segment_monographs(pages, toc)
+    by = {b.drug_name: b.body for b in result.blocks}
+    assert "Dosages" in by["Acetaminophen"]  # tail kept with the right drug
+    assert "10 mg/kg" in by["Acetaminophen"]
+    assert "A diuretic." in by["Acetazolamide"]
+    assert "10 mg/kg" not in by["Acetazolamide"]

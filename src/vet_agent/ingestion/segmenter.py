@@ -23,18 +23,25 @@ class SegmentationResult(BaseModel):
 
 
 def _heading_index(text: str, drug_name: str, start: int, end: int) -> int | None:
-    """Earliest offset of a heading line for *drug_name* within ``text[start:end]``.
+    """Offset of the monograph-title line for *drug_name* within ``text[start:end]``.
 
-    Matches the three real heading-line formats: bare (``Acarbose``), page-number
-    prefix (``90 Acarbose``, even pages) and suffix (``Acarbose 90``, odd pages).
+    The true title is the *bare* name on its own line (``Acetazolamide``); the
+    ``Name 9`` / ``9 Name`` forms are running headers that repeat on every page of the
+    monograph (and on a shared page can sit above the *previous* drug's tail). So we
+    prefer the bare title and fall back to the numbered running-header forms only when
+    no bare title is found — otherwise a shared-page running header would truncate the
+    preceding drug before its Dosages section.
     """
     escaped = re.escape(drug_name)
-    patterns = (
-        re.compile(rf"^{escaped}\s*$", re.MULTILINE),
+    bare = re.compile(rf"^{escaped}\s*$", re.MULTILINE)
+    m = bare.search(text, start, end)
+    if m:
+        return m.start()
+    numbered = (
         re.compile(rf"^\d+\s+{escaped}\s*$", re.MULTILINE),
         re.compile(rf"^{escaped}\s+\d+\s*$", re.MULTILINE),
     )
-    candidates = [m.start() for p in patterns if (m := p.search(text, start, end))]
+    candidates = [mm.start() for p in numbered if (mm := p.search(text, start, end))]
     return min(candidates) if candidates else None
 
 
