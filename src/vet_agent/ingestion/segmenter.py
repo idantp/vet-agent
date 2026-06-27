@@ -45,6 +45,20 @@ def _heading_index(text: str, drug_name: str, start: int, end: int) -> int | Non
     return min(candidates) if candidates else None
 
 
+def _interpolate_index(book_page: int, book_to_index: dict[int, int], n_pages: int) -> int | None:
+    """Estimate a page index for a book page with no detected running-header number.
+
+    Uses the nearest known book page and assumes the local page-index-to-book-page
+    offset is constant (it is, within a run of normal pages). Returns None if the map
+    is empty or the estimate falls outside the page range.
+    """
+    if not book_to_index:
+        return None
+    nearest = min(book_to_index, key=lambda known: abs(known - book_page))
+    est = book_to_index[nearest] - (nearest - book_page)
+    return est if 0 <= est < n_pages else None
+
+
 def segment_monographs(pages: list[str], toc: list[TocEntry]) -> SegmentationResult:
     """Slice the book into per-drug blocks, anchoring each drug at its TOC book page.
 
@@ -72,6 +86,13 @@ def segment_monographs(pages: list[str], toc: list[TocEntry]) -> SegmentationRes
     missing: list[TocEntry] = []
     for entry in toc:
         idx = book_to_index.get(entry.book_page)
+        interpolated = idx is None
+        if interpolated:
+            # A few pages carry no running-header number (notably the very first
+            # monograph, book page 1). Estimate the anchor from the nearest known
+            # book page, but only accept the drug if its title is actually found there
+            # — so non-monograph TOC lines don't grab arbitrary content.
+            idx = _interpolate_index(entry.book_page, book_to_index, len(pages))
         if idx is None:
             missing.append(entry)
             continue
@@ -79,9 +100,14 @@ def segment_monographs(pages: list[str], toc: list[TocEntry]) -> SegmentationRes
         window_idx = min(idx + _HEADING_WINDOW_PAGES, len(pages) - 1)
         window_end = page_offsets[window_idx] + len(pages[window_idx])
         pos = _heading_index(body, entry.drug_name, anchor, window_end)
-        # If the title line isn't cleanly matched near the anchor, fall back to the
-        # page start — the monograph still begins on this page.
-        located.append((entry, pos if pos is not None else anchor))
+        if pos is None:
+            if interpolated:
+                missing.append(entry)
+                continue
+            # Heading not cleanly matched near a detected anchor — the monograph still
+            # begins on this page, so fall back to the page start.
+            pos = anchor
+        located.append((entry, pos))
 
     located.sort(key=lambda pair: pair[1])
     blocks: list[MonographBlock] = []

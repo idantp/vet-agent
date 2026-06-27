@@ -73,3 +73,33 @@ def test_shared_page_keeps_preceding_drugs_tail_via_bare_title():
     assert "10 mg/kg" in by["Acetaminophen"]
     assert "A diuretic." in by["Acetazolamide"]
     assert "10 mg/kg" not in by["Acetazolamide"]
+
+
+def test_missing_book_page_is_interpolated_when_title_present():
+    # The first monograph's page often carries no running-header number (book page 1):
+    # its first line is the bare title. The anchor is interpolated from the next page.
+    pages = [
+        "Acarbose\nUses/Indications\nAlpha-glucosidase inhibitor.",
+        "Acepromazine 2\nUses/Indications\nA phenothiazine.",
+    ]
+    toc = [
+        TocEntry(drug_name="Acarbose", book_page=1),
+        TocEntry(drug_name="Acepromazine", book_page=2),
+    ]
+    result = segment_monographs(pages, toc)
+    assert [b.drug_name for b in result.blocks] == ["Acarbose", "Acepromazine"]
+    assert result.missing == []
+    assert "Alpha-glucosidase" in result.blocks[0].body
+
+
+def test_interpolated_anchor_without_title_stays_missing():
+    # A non-monograph TOC line whose title never appears must NOT grab content via
+    # the interpolation fallback — it stays in `missing`.
+    pages = ["Acepromazine 2\nUses/Indications\nA phenothiazine."]
+    toc = [
+        TocEntry(drug_name="Acepromazine", book_page=2),
+        TocEntry(drug_name="Ophthalmic Agents, Topical", book_page=1),
+    ]
+    result = segment_monographs(pages, toc)
+    assert [b.drug_name for b in result.blocks] == ["Acepromazine"]
+    assert [e.drug_name for e in result.missing] == ["Ophthalmic Agents, Topical"]
