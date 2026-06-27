@@ -1823,29 +1823,33 @@ git commit -m "feat: add Typer CLI ingest command with TOC coverage gate"
 
 Achieved against the actual handbook (TOC pages 17–23, the "SYSTEMIC MONOGRAPHS" contents):
 
-- **Coverage: 638/641 located (99.5%)**, 15,006 chunks. Segmentation was rewritten to be
+- **Coverage: 640/641 located (99.8%)**, ~15,188 chunks. Segmentation was rewritten to be
   **page-anchored** (each page's printed book-page number is read from its running header;
   each TOC drug is located at its own `book_page` anchor) after the original forward-cursor
   approach proved fragile on real text (a single false match cascaded — only 179/641).
 - **Critical header fix:** the real dosing header is **`Dosages`** (not `Doses`), so dose
-  sections were initially never parsed; corrected. **541/638 monographs have a dose section**,
-  and Metronidazole yields 11 dose chunks split per species (dog/cat/horse).
-- **3 known exceptions** (surfaced in `missing_headings`, not silently dropped):
-  `Acarbose` (the first monograph's page carries no running-header number, so book page 1 is
-  undetectable) and two non-monograph category lines (`Ophthalmic Agents, Topical`,
-  `Routes of Administration for Ophthalmic Drugs`) that point to appendix material.
-- Because 2 of the 3 are not drug monographs and 1 is a first-page edge, the zero-tolerance
-  gate is run as `--max-missing 3` for acceptance (the exceptions are documented and reviewed).
-  Extending the TOC to pages 17–25 also ingests the topical appendix (766/772) but adds ~97
-  empty-section anomalies (brief topical entries share pages), so systemic-only (17–23) is the
-  clean v1 scope.
+  sections were initially never parsed; corrected. **632/640 monographs have a dose section**
+  (98.75%); **629/640 have the full core set** (indications + contraindications + adverse effects
+  + dosages). Metronidazole yields 11 dose chunks split per species (dog/cat/horse).
+- **Two robustness fixes recovered ~90 truncated monographs and the first-page edge:**
+  (1) `_heading_index` prefers the **bare monograph title** over the page's running header, so a
+  shared page (one drug's `Dosages` tail above the next drug's start) no longer truncates the
+  preceding drug before its dose section; (2) anchors are **interpolated** for the few pages with
+  no running-header number (e.g. book page 1 / `Acarbose`), accepted only when the title is
+  actually found there.
+- **1 remaining miss** (surfaced in `missing_headings`, not silently dropped):
+  `Routes of Administration for Ophthalmic Drugs` — a non-monograph reference line, not a drug.
+  The acceptance run uses `--max-missing 1`. Extending the TOC to pages 17–25 also ingests the
+  topical appendix (766/772) but adds ~97 empty-section anomalies (brief topical entries share
+  pages), so systemic-only (17–23) is the clean v1 scope.
 
 ### Deferred follow-ups (not blocking Phase 1)
-- Eliminate the `Acarbose`/book-page-1 edge (infer the first monograph's anchor).
-- Investigate the ~97 monographs with no dose section (some legitimately lack `Dosages`;
-  others may use a variant header or have the section spill past the page boundary).
+- The ~8 monographs still without a dose section are mostly Ophthalmic-appendix entries that
+  legitimately have none; a few may use a variant header — confirm during the Phase 6 eval.
 - Recover a monograph's final section when it spills onto the next drug's first page
   (e.g. Metronidazole's `Dosage Forms`), which currently gets dropped.
+- Trim the running-header line that the bare-title boundary leaves at the end of the preceding
+  drug's last section (cosmetic noise in the section text).
 
 ## What's Next (later plans)
 
