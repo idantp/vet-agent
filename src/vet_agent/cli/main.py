@@ -45,7 +45,11 @@ def ingest(
         raise typer.Exit(code=1)
 
     typer.echo(f"Reading {pdf} ...")
-    pages = extract_pages(pdf)
+    try:
+        pages = extract_pages(pdf)
+    except Exception as exc:  # pypdf raises several read errors for non-PDF/corrupt input
+        typer.echo(f"Error: could not read PDF {pdf}: {exc}")
+        raise typer.Exit(code=1) from exc
     monographs, chunks, report = run_ingestion(pages, toc_page_range=(toc_start, toc_end))
 
     # Always write artifacts first, so parse_report.json (with missing_headings) is
@@ -56,6 +60,14 @@ def ingest(
         f"{len(report.missing_headings)} missing headings, {len(report.anomalies)} anomalies. "
         f"Artifacts -> {out_dir}"
     )
+
+    # Empty TOC means the page range is wrong; fail rather than silently writing
+    # empty artifacts with a passing (0 > max_missing) gate.
+    if report.toc_entries == 0:
+        typer.echo(
+            "Error: no TOC entries were parsed — check the --toc-start/--toc-end page range."
+        )
+        raise typer.Exit(code=1)
 
     # Coverage gate: fail loudly if too many TOC drugs could not be located.
     if len(report.missing_headings) > max_missing:

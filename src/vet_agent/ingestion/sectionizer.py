@@ -10,9 +10,11 @@ HEADER_TO_SECTION: dict[str, SectionType] = {
     "Indications/Actions": SectionType.INDICATIONS,
     "Contraindications/Precautions/Warnings": SectionType.CONTRAINDICATIONS,
     "Contraindications/Precautions": SectionType.CONTRAINDICATIONS,
-    # Combined header in the alternate template; bucketed to adverse effects (it always
-    # carries adverse-effect content, with precautions noted alongside).
-    "Precautions/Adverse Effects": SectionType.ADVERSE_EFFECTS,
+    # Combined header in the alternate template. Bucketed to CONTRAINDICATIONS so the
+    # safety-critical contraindications/warnings flow finds these drugs' precautions
+    # (the alternate template has no separate Contraindications section). The adverse-
+    # effect content is co-located here; adverse-effects retrieval is not a target flow.
+    "Precautions/Adverse Effects": SectionType.CONTRAINDICATIONS,
     "Adverse Effects": SectionType.ADVERSE_EFFECTS,
     "Reproductive/Nursing Safety": SectionType.REPRODUCTIVE_SAFETY,
     "Overdose/Acute Toxicity": SectionType.OVERDOSE_TOXICITY,

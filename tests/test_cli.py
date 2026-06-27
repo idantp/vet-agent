@@ -22,3 +22,11 @@ def test_ingest_rejects_inverted_toc_range():
     result = runner.invoke(app, ["ingest", "x.pdf", "--toc-start", "5", "--toc-end", "2"])
     assert result.exit_code != 0
     assert "toc-start" in result.stdout.lower()
+
+
+def test_ingest_reports_clean_error_for_non_pdf_file(tmp_path):
+    bad = tmp_path / "notes.txt"
+    bad.write_text("this is not a PDF")
+    result = runner.invoke(app, ["ingest", str(bad)])
+    assert result.exit_code != 0
+    assert "could not read pdf" in result.stdout.lower()

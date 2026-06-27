@@ -101,10 +101,24 @@ def _chunk_section(
 def chunk_monograph(
     mono: Monograph, max_chars: int = DEFAULT_MAX_CHARS, overlap: int = DEFAULT_OVERLAP
 ) -> list[Chunk]:
-    """Produce structure-aware chunks for one monograph."""
-    chunks: list[Chunk] = []
+    """Produce structure-aware chunks for one monograph.
+
+    Ordinals are assigned uniquely per ``(section_type, species)`` across the whole
+    monograph, so two sections that map to the same `SectionType` (e.g. headers
+    ``Dosages`` and ``Doses``, or two ``Pharmacology`` variants) cannot produce
+    colliding `logical_key`s — which would silently drop a chunk on a Phase-2 upsert.
+    """
+    raw: list[Chunk] = []
     for section in mono.sections:
-        chunks.extend(_chunk_section(mono.drug_name, mono.book_page, section, max_chars, overlap))
+        raw.extend(_chunk_section(mono.drug_name, mono.book_page, section, max_chars, overlap))
+
+    counters: dict[tuple[SectionType, tuple[str, ...]], int] = {}
+    chunks: list[Chunk] = []
+    for chunk in raw:
+        key = (chunk.section_type, tuple(chunk.species))
+        ordinal = counters.get(key, 0)
+        counters[key] = ordinal + 1
+        chunks.append(chunk.model_copy(update={"ordinal": ordinal}))
     return chunks
 
 
