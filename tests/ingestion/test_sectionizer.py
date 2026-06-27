@@ -44,3 +44,16 @@ def test_consecutive_headers_with_no_body_emit_no_empty_section():
     sections = split_sections(body)
     assert [s.section_type for s in sections] == [SectionType.CLIENT_INFORMATION]
     assert sections[0].text == "Some real text."
+
+
+def test_alternate_template_header_variants_map_correctly():
+    # The older/biologic monograph template uses different header wording.
+    body = (
+        "Indications/Actions\nUsed in birds.\n"
+        "Suggested Dosages/Uses\nBIRDS: 1 mg/kg\n"
+        "Contraindications/Precautions\nAvoid in renal disease."
+    )
+    by = {s.section_type: s.text for s in split_sections(body)}
+    assert by[SectionType.INDICATIONS] == "Used in birds."
+    assert by[SectionType.DOSES] == "BIRDS: 1 mg/kg"
+    assert by[SectionType.CONTRAINDICATIONS] == "Avoid in renal disease."

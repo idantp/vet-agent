@@ -6,25 +6,40 @@ from vet_agent.ingestion.models import Section, SectionType
 HEADER_TO_SECTION: dict[str, SectionType] = {
     "Prescriber Highlights": SectionType.PRESCRIBER_HIGHLIGHTS,
     "Uses/Indications": SectionType.INDICATIONS,
+    # Alternate template (older/biologic monographs) uses "Indications/Actions".
+    "Indications/Actions": SectionType.INDICATIONS,
     "Contraindications/Precautions/Warnings": SectionType.CONTRAINDICATIONS,
+    "Contraindications/Precautions": SectionType.CONTRAINDICATIONS,
+    # Combined header in the alternate template; bucketed to adverse effects (it always
+    # carries adverse-effect content, with precautions noted alongside).
+    "Precautions/Adverse Effects": SectionType.ADVERSE_EFFECTS,
     "Adverse Effects": SectionType.ADVERSE_EFFECTS,
     "Reproductive/Nursing Safety": SectionType.REPRODUCTIVE_SAFETY,
     "Overdose/Acute Toxicity": SectionType.OVERDOSE_TOXICITY,
     "Overdosage/Acute Toxicity": SectionType.OVERDOSE_TOXICITY,
+    "Overdose/Toxicity": SectionType.OVERDOSE_TOXICITY,
+    "Overdoses/Acute Toxicity": SectionType.OVERDOSE_TOXICITY,
     "Drug Interactions": SectionType.DRUG_INTERACTIONS,
     "Laboratory Considerations": SectionType.LABORATORY_CONSIDERATIONS,
+    "Laboratory Interactions": SectionType.LABORATORY_CONSIDERATIONS,
     "Pharmacology/Actions": SectionType.PHARMACOLOGY,
+    "Pharmacology": SectionType.PHARMACOLOGY,
     "Pharmacokinetics": SectionType.PHARMACOKINETICS,
     "Monitoring": SectionType.MONITORING,
     "Client Information": SectionType.CLIENT_INFORMATION,
     "Chemistry/Synonyms": SectionType.CHEMISTRY,
+    "Chemistry": SectionType.CHEMISTRY,
     "Storage/Stability": SectionType.STORAGE,
     "Compatibility/Compounding Considerations": SectionType.COMPOUNDING,
     "Dosage Forms/Regulatory Status": SectionType.DOSAGE_FORMS,
     "Dose Forms/Regulatory Status": SectionType.DOSAGE_FORMS,
     # The real Plumb's dosing header is "Dosages"; "Doses" kept as a defensive alias.
+    # The alternate template uses "Suggested Dosages/Uses" (and word-order variants).
     "Dosages": SectionType.DOSES,
     "Doses": SectionType.DOSES,
+    "Suggested Dosages/Uses": SectionType.DOSES,
+    "Suggested Uses/Dosages": SectionType.DOSES,
+    "Suggested Dosages/Use": SectionType.DOSES,
 }
 
 _SLASH_SPACE_RE = re.compile(r"\s*/\s*")
