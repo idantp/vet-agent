@@ -253,32 +253,11 @@ For each candidate model key:
 Then a **reranker-lift** pass: take each model's top-`RERANK_FETCH_K` candidates, rerank with
 `bge-reranker-v2-m3`, recompute metrics, and report the delta.
 
-**No eval framework in Phase 2 — hand-roll the metrics (evidence-backed).** Retrieval metrics
-(recall@k, MRR, hit-rate) are short, exact, deterministic pure functions over **binary** relevance
-labels, so we implement them in `metrics.py`. This mirrors what the leading production RAG
-*application* frameworks do: **Haystack v2** implements its retrieval evaluators in pure Python (zero
-IR libraries) and **LlamaIndex** hand-rolls `HitRate`/`MRR`/`Recall`/`NDCG` with only stdlib `math` +
-`numpy` (its default metric set is `["mrr", "hit_rate"]`).
-
-`ranx` and `pytrec_eval` were evaluated and **rejected for v1**: they are *academic-benchmarking*
-tools (e.g. BEIR depends on `pytrec_eval`), not RAG-app components. `pytrec_eval` is a C-extension
-that downloads trec_eval source from NIST at install time — an offline/air-gapped **CI hazard** that
-conflicts with the DoD ("tests offline and fast") — and upstream is dormant since 2020. `ranx` is
-clean (MIT, validated vs trec_eval) but a **heavy dependency** (numba + pandas + scipy + seaborn +
-ir_datasets) whose value (Numba speed, significance testing, fusion) is irrelevant at our scale
-(~80 queries × 15k docs).
-
-**Correctness note:** the one real gotcha is **tie-handling** (trec_eval breaks score ties by
-doc-id). Exact cosine over distinct float vectors makes ties practically impossible, but we still
-sort with a **deterministic secondary key (`logical_key`)** for reproducible ranks, and unit-test the
+**Correctness note (tie-handling).** Ranking metrics sort candidates by score **then** by a
+deterministic secondary key (`logical_key`), so ties produce reproducible ranks (the standard IR
+convention breaks score ties by doc id). Exact cosine over distinct float vectors makes ties
+practically impossible here, but we enforce the deterministic sort regardless and unit-test the
 metric functions against hand-computed fixtures.
-
-**Deferred trigger:** if Phase 6 needs graded-relevance **nDCG**, reach first for
-`sklearn.metrics.ndcg_score` (the lightweight path Arize Phoenix uses) before a full IR library; only
-if we need **statistical-significance testing** between models or **BEIR-comparable** numbers do we
-adopt `ranx` (or the maintained `pytrec-eval-terrier` fork). RAGAS (answer faithfulness / context precision) is also a Phase-6
-concern — it scores *generated answers*, of which Phase 2 has none. This same benchmark harness is
-reused in Phase 6.
 
 `metrics.py` holds pure ranking-metric functions (unit-tested against synthetic rankings).
 Output: `benchmark_scorecard.md` (model × metric table + per-flow breakdown + reranker lift +
@@ -334,8 +313,6 @@ Add to `pyproject.toml` (verify latest on PyPI/HF before pinning — standing me
   phrase eval queries. The package runtime and CI never call Claude (CI reads the committed YAML), so
   it stays out of main deps; Phase 4 promotes it to a main dependency when the agent needs it at
   runtime.
-
-No external **eval framework** (RAGAS, etc.) in Phase 2 — see §11.
 
 ## 16. Definition of Done
 
