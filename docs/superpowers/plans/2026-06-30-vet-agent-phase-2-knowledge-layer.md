@@ -29,12 +29,12 @@
 - `__init__.py` — package docstring.
 - `metrics.py` — `rank_by_score`, `recall_at_k`, `hit_rate_at_k`, `reciprocal_rank`, `evaluate_query`, `mean_metrics`. Pure functions.
 - `eval_set.py` — `EvalCase` model, `load_eval_set()`, `derive_relevant_keys()`.
-- `eval_set_builder.py` — `FLOW_SECTIONS`, `QueryPhraser` protocol, `AnthropicQueryPhraser`, `build_eval_set()`, `write_eval_set()`. (In-package so it's mypy-checked and importable by tests without `sys.path` hacks.)
+- `eval_set_builder.py` — `FLOW_SECTIONS`, `QueryPhraser` protocol, `AnthropicQueryPhraser`, `build_eval_set()`, `write_eval_set()`, `promote_eval_set()`. (In-package so it's mypy-checked and importable by tests without `sys.path` hacks.)
 - `benchmark.py` — `embed_corpus`, `rank_for_query`, `ModelScore`, `benchmark_model`, `render_scorecard`, `write_scorecard`, `choose_default`.
 
 **New script:**
 
-- `scripts/build_eval_set.py` — thin Typer CLI that wires `Settings` + `AnthropicQueryPhraser` and calls `eval_set_builder.build_eval_set()`. (Lives outside ruff/mypy scope by design — keep it trivial.)
+- `scripts/build_eval_set.py` — thin Typer CLI with two commands: `generate` (writes a reviewable *draft*) and `promote` (freezes the reviewed draft to the committed eval set). Human review of the query phrasings happens between the two. (Lives outside ruff/mypy scope by design — keep it trivial.)
 
 **Modified:**
 
@@ -1718,13 +1718,20 @@ git commit -m "feat(eval): add in-memory embedder benchmark + scorecard"
 
 Notes: `build_eval_set` is pure + deterministic (seeded sampling, injected `QueryPhraser`), so it's fully testable with a `FakeQueryPhraser`. The builder lives in the package (mypy-checked, import-clean); the `scripts/` file is a thin CLI. The real `AnthropicQueryPhraser` is only exercised when the script is run by hand (Task 2.13). Generation samples drugs per flow that actually have the target section, derives labels via `derive_relevant_keys`, and phrases each query. `anthropic` is imported lazily inside `AnthropicQueryPhraser` (it's a dev-only dep; the package must import without it at runtime).
 
+**Human review gate (spec §10):** the model-phrased questions are reviewed before they're frozen, in a batch flow — `generate` writes a draft, the author edits the `query` phrasings in the YAML, then `promote` validates and freezes it to the committed set. `promote_eval_set` re-parses the draft through `load_eval_set` (so a malformed hand-edit fails loudly) and re-serializes canonically; only `query` strings are meant to be hand-edited (labels are deterministic).
+
 - [ ] **Step 1: Write the failing test**
 
 `tests/eval/test_build_eval_set.py`:
 
 ```python
 from vet_agent.eval.eval_set import load_eval_set
-from vet_agent.eval.eval_set_builder import FLOW_SECTIONS, build_eval_set, write_eval_set
+from vet_agent.eval.eval_set_builder import (
+    FLOW_SECTIONS,
+    build_eval_set,
+    promote_eval_set,
+    write_eval_set,
+)
 from vet_agent.ingestion.models import Chunk, SectionType
 
 
@@ -1765,6 +1772,23 @@ def test_write_and_reload_roundtrip(tmp_path):
     out = tmp_path / "retrieval_eval.yaml"
     write_eval_set(cases, out)
     assert [c.model_dump() for c in load_eval_set(out)] == [c.model_dump() for c in cases]
+
+
+def test_promote_validates_and_preserves_hand_edited_phrasing(tmp_path):
+    cases = build_eval_set(_chunks(), FakeQueryPhraser(), per_flow=5, seed=0)
+    draft = tmp_path / "retrieval_eval.draft.yaml"
+    write_eval_set(cases, draft)
+    # Simulate a human editing a query phrasing in the draft.
+    edited = draft.read_text(encoding="utf-8").replace("Q: Metronidazole/doses/", "Edited dog dose question? ")
+    draft.write_text(edited, encoding="utf-8")
+
+    final = tmp_path / "retrieval_eval.yaml"
+    count = promote_eval_set(draft, final)
+    promoted = load_eval_set(final)
+    assert count == len(promoted)
+    dose = next(c for c in promoted if c.flow == "dose")
+    assert dose.query.startswith("Edited dog dose question?")
+    assert dose.relevant_logical_keys == ["metronidazole|doses|dog|0"]  # labels intact
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1866,6 +1890,19 @@ def write_eval_set(cases: list[EvalCase], path: Path) -> None:
     path.write_text(
         yaml.safe_dump(payload, sort_keys=False, allow_unicode=True), encoding="utf-8"
     )
+
+
+def promote_eval_set(draft_path: Path, final_path: Path) -> int:
+    """Validate a human-reviewed draft and freeze it to the committed eval-set path.
+
+    Re-parses the draft through load_eval_set (a malformed hand-edit fails loudly here,
+    not later in the benchmark) and re-serializes canonically. Returns the case count.
+    """
+    from vet_agent.eval.eval_set import load_eval_set
+
+    cases = load_eval_set(draft_path)
+    write_eval_set(cases, final_path)
+    return len(cases)
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -1873,16 +1910,19 @@ def write_eval_set(cases: list[EvalCase], path: Path) -> None:
 Run: `uv run pytest tests/eval/test_build_eval_set.py -v`
 Expected: PASS (3 passed).
 
-- [ ] **Step 5: Write the thin CLI script**
+- [ ] **Step 5: Write the thin CLI script (generate + promote)**
 
 `scripts/build_eval_set.py`:
 
 ```python
-"""One-time, offline generation of the frozen retrieval eval set (needs an Anthropic key).
+"""Offline generation of the frozen retrieval eval set, with a human review gate.
 
 Run by hand (NOT in CI):
-    uv run python scripts/build_eval_set.py --chunks data/ingest/chunks.json \
-        --out data/eval/retrieval_eval.yaml
+    # 1) draft (needs VET_ANTHROPIC_API_KEY)
+    uv run python scripts/build_eval_set.py generate --chunks data/ingest/chunks.json
+    # 2) review/edit the query phrasings in data/eval/retrieval_eval.draft.yaml
+    # 3) freeze the reviewed draft
+    uv run python scripts/build_eval_set.py promote
 """
 
 from pathlib import Path
@@ -1890,27 +1930,53 @@ from pathlib import Path
 import typer
 
 from vet_agent.config import Settings
-from vet_agent.eval.eval_set_builder import AnthropicQueryPhraser, build_eval_set, write_eval_set
+from vet_agent.eval.eval_set_builder import (
+    AnthropicQueryPhraser,
+    build_eval_set,
+    promote_eval_set,
+    write_eval_set,
+)
 from vet_agent.knowledge.loader import read_chunks
 
-app = typer.Typer(help="Generate the frozen retrieval eval set.")
+app = typer.Typer(help="Generate + promote the frozen retrieval eval set.")
+
+DRAFT = Path("data/eval/retrieval_eval.draft.yaml")
+FINAL = Path("data/eval/retrieval_eval.yaml")
 
 
 @app.command()
-def main(
+def generate(
     chunks: Path = typer.Option(Path("data/ingest/chunks.json")),  # noqa: B008
-    out: Path = typer.Option(Path("data/eval/retrieval_eval.yaml")),  # noqa: B008
+    draft: Path = typer.Option(DRAFT),  # noqa: B008
     per_flow: int = typer.Option(25, help="Targets sampled per flow"),  # noqa: B008
     seed: int = typer.Option(0),  # noqa: B008
 ) -> None:
+    """Phrase queries with Claude and write a REVIEWABLE DRAFT (not the frozen set)."""
     settings = Settings()
     if not settings.anthropic_api_key:
         typer.echo("Error: VET_ANTHROPIC_API_KEY is required to phrase queries.")
         raise typer.Exit(code=1)
     phraser = AnthropicQueryPhraser(settings.anthropic_api_key, settings.reasoning_model)
     cases = build_eval_set(read_chunks(chunks), phraser, per_flow=per_flow, seed=seed)
-    write_eval_set(cases, out)
-    typer.echo(f"Wrote {len(cases)} eval cases -> {out}")
+    write_eval_set(cases, draft)
+    typer.echo(
+        f"Wrote {len(cases)} DRAFT cases -> {draft}\n"
+        "Review/edit the 'query' phrasings (labels are derived — leave them), "
+        "then run: scripts/build_eval_set.py promote"
+    )
+
+
+@app.command()
+def promote(
+    draft: Path = typer.Option(DRAFT),  # noqa: B008
+    out: Path = typer.Option(FINAL),  # noqa: B008
+) -> None:
+    """Validate the reviewed draft and freeze it to the committed eval set."""
+    if not draft.is_file():
+        typer.echo(f"Error: draft not found at {draft} (run 'generate' first).")
+        raise typer.Exit(code=1)
+    count = promote_eval_set(draft, out)
+    typer.echo(f"Promoted {count} reviewed cases -> {out}")
 
 
 if __name__ == "__main__":
@@ -1922,7 +1988,7 @@ if __name__ == "__main__":
 ```bash
 git add src/vet_agent/eval/eval_set_builder.py scripts/build_eval_set.py \
         tests/eval/test_build_eval_set.py
-git commit -m "feat(eval): add offline eval-set generation (LLM-phrased queries)"
+git commit -m "feat(eval): add eval-set generation with draft->review->promote gate"
 ```
 
 ---
@@ -2132,12 +2198,13 @@ git commit -m "feat(cli): add benchmark, load, and retrieve commands"
 
 This task is **manual** (needs network for model weights, an Anthropic key, and a running Qdrant). It is the Phase-2 acceptance check, analogous to Phase-1's real-PDF verification.
 
-- [ ] **Step 1: Ignore the embedding cache**
+- [ ] **Step 1: Ignore the embedding cache and the eval-set draft**
 
 Add to `.gitignore`:
 
 ```
 data/embeddings/
+data/eval/retrieval_eval.draft.yaml
 ```
 
 - [ ] **Step 2: Run the slow unit tests once (real embedder + reranker)**
@@ -2145,12 +2212,21 @@ data/embeddings/
 Run: `uv run pytest -m slow -v`
 Expected: PASS — MedEmbed-base loads and embeds 768-d; bge-reranker reorders by relevance. (First run downloads weights.)
 
-- [ ] **Step 3: Generate the frozen eval set**
+- [ ] **Step 3a: Generate the eval-set DRAFT**
 
 Ensure `VET_ANTHROPIC_API_KEY` is set (e.g. in `.env`). Then:
 
-Run: `uv run python scripts/build_eval_set.py --chunks data/ingest/chunks.json --out data/eval/retrieval_eval.yaml --per-flow 25 --seed 0`
-Expected: writes ~60–75 cases (25 per flow, minus any with no derivable labels). Spot-check the YAML: queries read naturally, `relevant_logical_keys` are non-empty and match the drug/section/species.
+Run: `uv run python scripts/build_eval_set.py generate --chunks data/ingest/chunks.json --per-flow 25 --seed 0`
+Expected: writes ~60–75 draft cases (25 per flow, minus any with no derivable labels) to `data/eval/retrieval_eval.draft.yaml`.
+
+- [ ] **Step 3b: Review the draft (human gate — spec §10)**
+
+Open `data/eval/retrieval_eval.draft.yaml` and review the **`query` phrasings** in one pass: fix any that are awkward, leading, or off-target, and delete weak cases. Leave `relevant_logical_keys` untouched (they're derived). Confirm queries read like real vet questions and the labels are non-empty and match the drug/section/species.
+
+- [ ] **Step 3c: Promote the reviewed draft to the frozen set**
+
+Run: `uv run python scripts/build_eval_set.py promote`
+Expected: validates the edited draft (fails loudly on a malformed hand-edit) and writes the committed `data/eval/retrieval_eval.yaml`.
 
 - [ ] **Step 4: Run the benchmark**
 

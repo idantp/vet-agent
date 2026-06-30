@@ -236,9 +236,24 @@ target** (so multi-chunk targets are fully credited), captured as `relevant_logi
 ```
 
 `eval/eval_set.py` loads + validates this file into typed objects and exposes the relevance-label
-derivation helper (pure, unit-tested). The Claude call lives only in the script and is injected
-behind a small interface so it can be faked in tests. Target size ~60–100 queries (final count set
-during implementation to balance signal vs. generation cost).
+derivation helper (pure, unit-tested). The Claude call lives only in the generation step and is
+injected behind a small interface so it can be faked in tests. Target size ~60–100 queries (final
+count set during implementation to balance signal vs. generation cost).
+
+**Human review gate (draft → review → freeze).** The model-generated question phrasings are the one
+non-deterministic, quality-sensitive input to the whole benchmark, so they are **human-approved
+before they are frozen**, in a batch flow:
+
+1. **Generate** writes a *draft* (`data/eval/retrieval_eval.draft.yaml`), not the committed file.
+2. The author **reviews the draft in one pass** — editing weak/leading/off-target phrasings and
+   deleting any bad cases directly in the YAML. Review scope is the `query` strings only; the
+   `relevant_logical_keys` labels are derived deterministically from chunk metadata and are not
+   hand-edited.
+3. **Promote** validates the reviewed draft (parsing it back through `load_eval_set`, so a malformed
+   hand-edit fails loudly) and freezes it to the committed `data/eval/retrieval_eval.yaml`.
+
+The draft is gitignored; only the reviewed, frozen set is committed. The benchmark reads only the
+frozen file, so CI stays deterministic and Anthropic-key-free.
 
 ## 11. Benchmark (`eval/benchmark.py` + `eval/metrics.py`)
 
