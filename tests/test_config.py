@@ -17,3 +17,21 @@ def test_env_override(monkeypatch):
     s = Settings()
     assert s.reasoning_model == "claude-3-5-sonnet-latest"
     assert s.anthropic_api_key == "sk-test"
+
+
+def test_phase2_defaults():
+    s = Settings()
+    assert s.embedding_model == "medembed-base"
+    assert s.qdrant_collection_prefix == "vet_chunks"
+    assert s.rerank_enabled is False
+    assert s.reranker_model == "bge-reranker-v2-m3"
+    assert s.embedding_batch_size == 64
+    assert s.retrieval_top_k == 5
+
+
+def test_phase2_env_override(monkeypatch):
+    monkeypatch.setenv("VET_EMBEDDING_MODEL", "bge-base")
+    monkeypatch.setenv("VET_RERANK_ENABLED", "true")
+    s = Settings()
+    assert s.embedding_model == "bge-base"
+    assert s.rerank_enabled is True

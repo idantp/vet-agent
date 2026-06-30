@@ -17,3 +17,11 @@ class Settings(BaseSettings):
 
     # Paths
     data_dir: Path = Path("data")
+
+    # Knowledge layer (Phase 2)
+    embedding_model: str = "medembed-base"
+    qdrant_collection_prefix: str = "vet_chunks"
+    rerank_enabled: bool = False
+    reranker_model: str = "bge-reranker-v2-m3"
+    embedding_batch_size: int = 64
+    retrieval_top_k: int = 5
