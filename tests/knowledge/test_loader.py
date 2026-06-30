@@ -1,3 +1,4 @@
+import pytest
 from qdrant_client import QdrantClient
 
 from tests.knowledge.fakes import FakeEmbedder
@@ -65,3 +66,28 @@ def test_read_chunks_roundtrips(tmp_path):
     path.write_text(json.dumps([c.model_dump() for c in chunks]), encoding="utf-8")
     loaded = read_chunks(path)
     assert loaded == chunks
+
+
+def test_duplicate_logical_key_input_raises():
+    # Same drug/section/species/ordinal -> identical logical_key -> identical point_id.
+    dup = [_chunk("a", ordinal=0), _chunk("b", ordinal=0)]
+    store, emb = _store(), FakeEmbedder(dim=8)
+    with pytest.raises(ValueError, match="Duplicate logical_key"):
+        load_chunks(dup, emb, store)
+
+
+def test_empty_input_with_prune_raises_when_collection_nonempty():
+    chunks = [_chunk("a", ordinal=0)]
+    store, emb = _store(), FakeEmbedder(dim=8)
+    load_chunks(chunks, emb, store)
+    with pytest.raises(ValueError, match="prune=True"):
+        load_chunks([], emb, store)
+
+
+def test_empty_input_with_prune_false_is_noop():
+    chunks = [_chunk("a", ordinal=0)]
+    store, emb = _store(), FakeEmbedder(dim=8)
+    load_chunks(chunks, emb, store)
+    r = load_chunks([], emb, store, prune=False)
+    assert (r.upserted, r.skipped, r.pruned) == (0, 0, 0)
+    assert len(store.existing_hashes()) == 1

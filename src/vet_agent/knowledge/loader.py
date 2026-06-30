@@ -41,6 +41,10 @@ def load_chunks(
 
     Skips chunks whose stored content_hash is unchanged, embeds+upserts changed/new
     ones, and (unless prune=False) deletes points whose logical key has disappeared.
+
+    Raises ValueError if the input contains duplicate logical keys, or if called with
+    no chunks while prune=True and the collection is non-empty (a guard against
+    accidentally wiping the store).
     """
     store.ensure_collection(embedder.dim)
 
@@ -49,10 +53,19 @@ def load_chunks(
     for chunk in chunks:
         lk = logical_key(chunk)
         pid = point_id(lk)
+        if pid in desired:
+            raise ValueError(f"Duplicate logical_key in input chunks: {lk!r}")
         desired[pid] = chunk
         hashes[pid] = content_hash(chunk)
 
     existing = store.existing_hashes()
+
+    if prune and not chunks and existing:
+        raise ValueError(
+            f"load_chunks called with no chunks and prune=True, which would delete all "
+            f"{len(existing)} existing points. Pass prune=False to intentionally clear."
+        )
+
     to_embed = [pid for pid in desired if existing.get(pid) != hashes[pid]]
 
     points: list[PointPayload] = []
@@ -76,12 +89,15 @@ def load_chunks(
             )
     store.upsert(points)
 
-    orphans = [pid for pid in existing if pid not in desired]
-    if prune and orphans:
-        store.delete(orphans)
+    pruned = 0
+    if prune:
+        orphans = [pid for pid in existing if pid not in desired]
+        if orphans:
+            store.delete(orphans)
+        pruned = len(orphans)
 
     return LoadReport(
         upserted=len(points),
         skipped=len(desired) - len(points),
-        pruned=len(orphans) if prune else 0,
+        pruned=pruned,
     )
