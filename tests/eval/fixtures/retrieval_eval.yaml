@@ -1,0 +1,14 @@
+- query: "What is the dose of metronidazole for a dog?"
+  flow: dose
+  drug: Metronidazole
+  section: doses
+  species: [dog]
+  relevant_logical_keys:
+    - "metronidazole|doses|dog|0"
+- query: "What does metronidazole treat?"
+  flow: indication
+  drug: Metronidazole
+  section: indications
+  species: []
+  relevant_logical_keys:
+    - "metronidazole|indications|all|0"
