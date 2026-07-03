@@ -1,8 +1,18 @@
 # Brainstorming visual companion
 .superpowers/
 
-# Local data artifacts (PDF source, built index)
-/data/
+# Personal notes — not part of the project; agents should not read/act on these
+/docs/decisions/
+
+# Local data artifacts (PDF source, built index, embedding cache) are gitignored,
+# EXCEPT the committed retrieval eval set + benchmark scorecard (Phase 2 deliverables).
+# Use /data/* (ignore contents, not the dir) so git can descend to the re-included files.
+/data/*
+!/data/eval/
+/data/eval/*
+!/data/eval/retrieval_eval.yaml
+!/data/eval/benchmark_scorecard.md
+!/data/eval/benchmark_scorecard.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
