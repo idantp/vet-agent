@@ -31,10 +31,12 @@ def generate(
 ) -> None:
     """Phrase queries with Claude and write a REVIEWABLE DRAFT (not the frozen set)."""
     settings = Settings()
-    if not settings.anthropic_api_key:
+    if settings.anthropic_api_key is None:
         typer.echo("Error: VET_ANTHROPIC_API_KEY is required to phrase queries.")
         raise typer.Exit(code=1)
-    phraser = AnthropicQueryPhraser(settings.anthropic_api_key, settings.reasoning_model)
+    phraser = AnthropicQueryPhraser(
+        settings.anthropic_api_key.get_secret_value(), settings.reasoning_model
+    )
     cases = build_eval_set(read_chunks(chunks), phraser, per_flow=per_flow, seed=seed)
     write_eval_set(cases, draft)
     typer.echo(

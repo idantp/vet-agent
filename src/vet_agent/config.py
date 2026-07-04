@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,9 +9,10 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="VET_", env_file=".env", extra="ignore")
 
-    # LLM
-    anthropic_api_key: str | None = None
-    reasoning_model: str = "claude-sonnet-4-6"
+    # LLM. SecretStr so the key renders as '**********' in any repr/log/traceback;
+    # read the raw value with .get_secret_value() only where it's actually needed.
+    anthropic_api_key: SecretStr | None = None
+    reasoning_model: str = "claude-sonnet-5"
 
     # Vector DB (used from Phase 2 onward)
     qdrant_url: str = "http://localhost:6333"
