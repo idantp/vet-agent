@@ -82,28 +82,37 @@ def test_promote_validates_and_preserves_hand_edited_phrasing(tmp_path):
     assert dose.relevant_logical_keys == ["metronidazole|doses|dog|0"]
 
 
-def test_stratified_sampling_surfaces_rare_species():
-    chunks = [
-        Chunk(
-            drug_name=f"Drug{i}",
-            section_type=SectionType.DOSES,
-            species=["dog"],
-            book_page=1,
-            text="d",
-            ordinal=0,
-        )
-        for i in range(10)
-    ]
-    chunks.append(
-        Chunk(
-            drug_name="RareDrug",
-            section_type=SectionType.DOSES,
-            species=["cattle"],
-            book_page=1,
-            text="d",
-            ordinal=0,
-        )
+def _dose_chunk(drug: str, species: list[str]) -> Chunk:
+    return Chunk(
+        drug_name=drug,
+        section_type=SectionType.DOSES,
+        species=species,
+        book_page=1,
+        text="d",
+        ordinal=0,
     )
+
+
+def test_companion_species_dominate_sampling():
+    # 30 dog-dose drugs + 30 exotic/food-animal drugs (varied). With other_fraction=0.2 and
+    # per_flow=10, the quota is ~2 'other', so dog/cat should fill the other ~8.
+    exotics = ["horse", "cattle", "swine", "rabbit", "llama", "alpaca"]
+    chunks = [_dose_chunk(f"Comp{i}", ["dog"]) for i in range(30)]
+    chunks += [_dose_chunk(f"Exotic{i}", [exotics[i % len(exotics)]]) for i in range(30)]
+    dose = [
+        c
+        for c in build_eval_set(chunks, FakeQueryPhraser(), per_flow=10, seed=0)
+        if c.flow == "dose"
+    ]
+    companion = [c for c in dose if set(c.species) <= {"dog", "cat"}]
+    assert len(companion) == 8  # ~80% companion
+    assert len(dose) - len(companion) == 2  # only a few exotics
+
+
+def test_a_few_other_species_still_appear():
+    # 10 dog-dose drugs + 1 cattle drug; even a tiny per_flow keeps at least one 'other'.
+    chunks = [_dose_chunk(f"Drug{i}", ["dog"]) for i in range(10)]
+    chunks.append(_dose_chunk("RareDrug", ["cattle"]))
     cases = build_eval_set(chunks, FakeQueryPhraser(), per_flow=2, seed=0)
     dose_species = {tuple(c.species) for c in cases if c.flow == "dose"}
-    assert ("cattle",) in dose_species  # round-robin surfaces the rare species early
+    assert ("cattle",) in dose_species  # the small 'other' quota (min 1) still includes it

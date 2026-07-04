@@ -28,6 +28,9 @@ def generate(
     draft: Path = typer.Option(DRAFT),
     per_flow: int = typer.Option(25, help="Targets sampled per flow"),
     seed: int = typer.Option(0),
+    other_fraction: float = typer.Option(
+        0.2, help="Max share of exotic/food-animal species per flow (rest are dog/cat)"
+    ),
 ) -> None:
     """Phrase queries with Claude and write a REVIEWABLE DRAFT (not the frozen set)."""
     settings = Settings()
@@ -37,7 +40,9 @@ def generate(
     phraser = AnthropicQueryPhraser(
         settings.anthropic_api_key.get_secret_value(), settings.reasoning_model
     )
-    cases = build_eval_set(read_chunks(chunks), phraser, per_flow=per_flow, seed=seed)
+    cases = build_eval_set(
+        read_chunks(chunks), phraser, per_flow=per_flow, seed=seed, other_fraction=other_fraction
+    )
     write_eval_set(cases, draft)
     typer.echo(
         f"Wrote {len(cases)} DRAFT cases -> {draft}\n"

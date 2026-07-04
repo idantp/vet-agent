@@ -80,7 +80,8 @@ class AnthropicQueryPhraser:
     def phrase(self, drug: str, section: SectionType, species: list[str], sample_text: str) -> str:
         from anthropic.types import MessageParam
 
-        who = " and ".join(species) if species else "an animal"
+        named = [s for s in species if s not in {"all", "unspecified"}]
+        who = " and ".join(named) if named else "an animal"
         examples = _FEWSHOT_BY_SECTION.get(section, [])
         example_block = ""
         if examples:
@@ -111,16 +112,33 @@ class AnthropicQueryPhraser:
         return "".join(parts).strip()
 
 
-def _stratified_sample(
-    targets: list[tuple[str, tuple[str, ...]]], per_flow: int, rng: random.Random
-) -> list[tuple[str, tuple[str, ...]]]:
-    """Pick up to per_flow targets, spread across species so rarer species surface.
+# Dog and cat dominate small-animal practice, so the eval set is companion-dominant:
+# mostly dog/cat, with only a small, varied minority of exotic / food-animal questions.
+_COMPANION_SPECIES = {"dog", "cat"}
 
-    Targets are grouped by their species signature; we shuffle within each group
-    (seeded) and round-robin across groups in sorted key order. When a section carries
-    only one species signature (e.g. prose tagged ['all']), this degenerates to a plain
-    shuffled pick over drugs. Deterministic for a fixed seed.
+
+def _species_bucket(species: tuple[str, ...]) -> str:
+    """Classify a species signature: 'companion' (dog/cat only), 'generic' (deliberately
+    species-agnostic prose tagged ['all']), or 'other' (exotic / food-animal, and dose
+    'unspecified' parse artifacts — both capped so dog/cat dominate)."""
+    unique = set(species)
+    if unique and unique <= _COMPANION_SPECIES:
+        return "companion"
+    if unique == {"all"}:
+        return "generic"
+    return "other"
+
+
+def _round_robin(
+    targets: list[tuple[str, tuple[str, ...]]], limit: int, rng: random.Random
+) -> list[tuple[str, tuple[str, ...]]]:
+    """Pick up to `limit` targets spread across their species signatures (deterministic).
+
+    Groups by species signature, shuffles within each group (seeded), and round-robins
+    across groups in sorted key order — so a small `limit` still hits varied species.
     """
+    if limit <= 0 or not targets:
+        return []
     groups: dict[tuple[str, ...], list[tuple[str, tuple[str, ...]]]] = {}
     for target in targets:
         groups.setdefault(target[1], []).append(target)
@@ -129,31 +147,76 @@ def _stratified_sample(
         rng.shuffle(groups[key])
     picked: list[tuple[str, tuple[str, ...]]] = []
     cursors = {key: 0 for key in ordered_keys}
-    while len(picked) < per_flow:
+    while len(picked) < limit:
         progressed = False
         for key in ordered_keys:
             if cursors[key] < len(groups[key]):
                 picked.append(groups[key][cursors[key]])
                 cursors[key] += 1
                 progressed = True
-                if len(picked) >= per_flow:
+                if len(picked) >= limit:
                     break
         if not progressed:
             break
     return picked
 
 
+def _sample_targets(
+    targets: list[tuple[str, tuple[str, ...]]],
+    per_flow: int,
+    rng: random.Random,
+    *,
+    other_fraction: float,
+) -> list[tuple[str, tuple[str, ...]]]:
+    """Companion-dominant sampling: mostly dog/cat (plus species-agnostic prose), with the
+    'other' (exotic / food-animal) species capped at ~other_fraction of per_flow. Within
+    each bucket, species are spread round-robin so the few 'other' slots hit varied
+    species rather than, say, five swine. Deterministic for a fixed seed.
+    """
+    buckets: dict[str, list[tuple[str, tuple[str, ...]]]] = {
+        "companion": [],
+        "generic": [],
+        "other": [],
+    }
+    for target in targets:
+        buckets[_species_bucket(target[1])].append(target)
+
+    other_quota = 0
+    if buckets["other"]:
+        other_quota = min(len(buckets["other"]), max(1, round(per_flow * other_fraction)))
+    picked = _round_robin(buckets["other"], other_quota, rng)
+
+    picked += _round_robin(buckets["companion"] + buckets["generic"], per_flow - len(picked), rng)
+
+    if len(picked) < per_flow:  # small primary pool: backfill from any remaining 'other'
+        seen = set(picked)
+        leftover = [t for t in buckets["other"] if t not in seen]
+        picked += _round_robin(leftover, per_flow - len(picked), rng)
+    return picked
+
+
 def build_eval_set(
-    chunks: list[Chunk], phraser: QueryPhraser, *, per_flow: int, seed: int
+    chunks: list[Chunk],
+    phraser: QueryPhraser,
+    *,
+    per_flow: int,
+    seed: int,
+    other_fraction: float = 0.2,
 ) -> list[EvalCase]:
-    """Sample targets per flow (species-stratified), derive labels, phrase each query."""
+    """Sample targets per flow (companion-dominant), derive labels, phrase each query.
+
+    other_fraction caps the share of non-companion (exotic / food-animal) targets per
+    flow; the rest are dog/cat plus species-agnostic prose.
+    """
     rng = random.Random(seed)
     cases: list[EvalCase] = []
     for flow, section in FLOW_SECTIONS.items():
         targets = sorted(
             {(c.drug_name, tuple(c.species)) for c in chunks if c.section_type == section}
         )
-        for drug, species_tuple in _stratified_sample(targets, per_flow, rng):
+        for drug, species_tuple in _sample_targets(
+            targets, per_flow, rng, other_fraction=other_fraction
+        ):
             species = list(species_tuple)
             sample = next(
                 (c.text for c in chunks if c.drug_name == drug and c.section_type == section),
