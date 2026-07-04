@@ -228,10 +228,10 @@ it:
 | `contraindication` | `contraindications` | `monitoring` | `monitoring` |
 | `reproductive_safety` | `reproductive_safety` | `administration` | `client_information` |
 
-Sampling is **companion-dominant** to mirror real small-animal-practice usage: dog/cat (plus
-species-agnostic `['all']` prose) fill most slots, while exotic / food-animal species are capped at
-a small, tunable fraction (default ~20%, `--other-fraction`) and spread across varied species — so a
-few rabbit/bird/cattle questions appear without swamping the set. For each sampled
+Sampling is **cat/dog-focused by default** to mirror small-animal practice: dog/cat targets (plus
+deliberately species-agnostic `['all']` prose) fill the set, and exotic / food-animal species are
+**excluded by default** (`other_fraction = 0`). Raising `--other-fraction` (e.g. 0.1) reintroduces a
+small, capped, species-varied minority of exotics rather than an even spread. For each sampled
 `(drug, section, species)` target, Claude writes one natural question from a **practicing-clinician
 persona** (patient in front of them; known signalment/diagnosis/organ status), steered by
 **flow-matched few-shot examples**, and grounded in a representative chunk's text. One question per
