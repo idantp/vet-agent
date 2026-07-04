@@ -217,17 +217,34 @@ never surface), and (edge) filter-dominant.
 
 ## 10. Retrieval eval set (`scripts/build_eval_set.py` → `data/eval/retrieval_eval.yaml`)
 
-**One-time, offline, committed.** Stratified sampling across the **three product flows**
-(dose / contraindication / indication) plus a sample of other sections; for each sampled
-`(drug, section, species)` target, Claude writes one natural-language question grounded in a
-representative chunk's text. **Ground truth = every chunk whose `(drug, section, species)` matches the
-target** (so multi-chunk targets are fully credited), captured as `relevant_logical_keys`.
+**One-time, offline, committed.** Sampling across **eight question flows** that mirror the real
+questions veterinarians ask at the point of care — each mapped to the monograph section that answers
+it:
+
+| Flow | Section | Flow | Section |
+|---|---|---|---|
+| `dose` | `doses` | `interaction` | `drug_interactions` |
+| `indication` | `indications` | `adverse_effects` | `adverse_effects` |
+| `contraindication` | `contraindications` | `monitoring` | `monitoring` |
+| `reproductive_safety` | `reproductive_safety` | `administration` | `client_information` |
+
+Sampling is **species-stratified** (round-robin across species signatures) so rarer species —
+rabbits, birds, cattle — surface, not just the corpus-dominant dog/cat. For each sampled
+`(drug, section, species)` target, Claude writes one natural question from a **practicing-clinician
+persona** (patient in front of them; known signalment/diagnosis/organ status), steered by
+**flow-matched few-shot examples**, and grounded in a representative chunk's text. One question per
+target, focused on that single section (so labels stay clean). Species-applicability ("meloxicam in
+rabbits?") is covered by sampling exotic/food-animal species within the dose + contraindication
+flows rather than a separate flow; dose adjustments live within the dose flow; food-animal
+withdrawal times are deferred (no clean section in Plumb's). **Ground truth = every chunk whose
+`(drug, section, species)` matches the target** (multi-chunk targets fully credited), captured as
+`relevant_logical_keys`.
 
 `retrieval_eval.yaml` entry schema:
 
 ```yaml
-- query: "What's the dose of metronidazole for a dog with giardia?"
-  flow: dose                       # dose | contraindication | indication | other
+- query: "What's the metronidazole dose for a 12 kg dog with giardia?"
+  flow: dose                       # one of the 8 flow keys above
   drug: Metronidazole
   section: doses
   species: [dog]
@@ -236,9 +253,10 @@ target** (so multi-chunk targets are fully credited), captured as `relevant_logi
 ```
 
 `eval/eval_set.py` loads + validates this file into typed objects and exposes the relevance-label
-derivation helper (pure, unit-tested). The Claude call lives only in the generation step and is
-injected behind a small interface so it can be faked in tests. Target size ~60–100 queries (final
-count set during implementation to balance signal vs. generation cost).
+derivation helper (pure, unit-tested); `eval/eval_set_builder.py` holds the flow map, few-shots,
+persona prompt, and stratified sampler. The Claude call lives only in the generation step and is
+injected behind a small `QueryPhraser` interface so it can be faked in tests. Target size ≈ 8 flows
+× ~25 ≈ ~200 queries (per-flow count is a CLI knob).
 
 **Human review gate (draft → review → freeze).** The model-generated question phrasings are the one
 non-deterministic, quality-sensitive input to the whole benchmark, so they are **human-approved
