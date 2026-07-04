@@ -34,10 +34,16 @@ def _chunks():
     ]
 
 
-def test_flow_sections_cover_three_flows():
+def test_flow_sections_cover_expected_flows():
+    assert len(FLOW_SECTIONS) == 8
     assert FLOW_SECTIONS["dose"] is SectionType.DOSES
     assert FLOW_SECTIONS["indication"] is SectionType.INDICATIONS
     assert FLOW_SECTIONS["contraindication"] is SectionType.CONTRAINDICATIONS
+    assert FLOW_SECTIONS["reproductive_safety"] is SectionType.REPRODUCTIVE_SAFETY
+    assert FLOW_SECTIONS["interaction"] is SectionType.DRUG_INTERACTIONS
+    assert FLOW_SECTIONS["adverse_effects"] is SectionType.ADVERSE_EFFECTS
+    assert FLOW_SECTIONS["monitoring"] is SectionType.MONITORING
+    assert FLOW_SECTIONS["administration"] is SectionType.CLIENT_INFORMATION
 
 
 def test_build_eval_set_labels_and_phrases_deterministically():
@@ -74,3 +80,30 @@ def test_promote_validates_and_preserves_hand_edited_phrasing(tmp_path):
     dose = next(c for c in promoted if c.flow == "dose")
     assert dose.query.startswith("Edited dog dose question?")
     assert dose.relevant_logical_keys == ["metronidazole|doses|dog|0"]
+
+
+def test_stratified_sampling_surfaces_rare_species():
+    chunks = [
+        Chunk(
+            drug_name=f"Drug{i}",
+            section_type=SectionType.DOSES,
+            species=["dog"],
+            book_page=1,
+            text="d",
+            ordinal=0,
+        )
+        for i in range(10)
+    ]
+    chunks.append(
+        Chunk(
+            drug_name="RareDrug",
+            section_type=SectionType.DOSES,
+            species=["cattle"],
+            book_page=1,
+            text="d",
+            ordinal=0,
+        )
+    )
+    cases = build_eval_set(chunks, FakeQueryPhraser(), per_flow=2, seed=0)
+    dose_species = {tuple(c.species) for c in cases if c.flow == "dose"}
+    assert ("cattle",) in dose_species  # round-robin surfaces the rare species early
