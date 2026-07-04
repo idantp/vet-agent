@@ -181,8 +181,11 @@ def _sample_targets(
     for target in targets:
         buckets[_species_bucket(target[1])].append(target)
 
+    # other_fraction<=0 (or per_flow<=0) requests no 'other' quota — strictly dog/cat +
+    # generic; otherwise guarantee at least one so a tiny per_flow still shows some variety.
+    # (With a scarce companion pool, the backfill below may still pull 'other' to hit per_flow.)
     other_quota = 0
-    if buckets["other"]:
+    if buckets["other"] and per_flow > 0 and other_fraction > 0:
         other_quota = min(len(buckets["other"]), max(1, round(per_flow * other_fraction)))
     picked = _round_robin(buckets["other"], other_quota, rng)
 
@@ -201,7 +204,7 @@ def build_eval_set(
     *,
     per_flow: int,
     seed: int,
-    other_fraction: float = 0.2,
+    other_fraction: float = 0.1,
 ) -> list[EvalCase]:
     """Sample targets per flow (companion-dominant), derive labels, phrase each query.
 
