@@ -94,18 +94,18 @@ def _dose_chunk(drug: str, species: list[str]) -> Chunk:
 
 
 def test_companion_species_dominate_sampling():
-    # 30 dog-dose drugs + 30 exotic/food-animal drugs (varied). With other_fraction=0.2 and
-    # per_flow=10, the quota is ~2 'other', so dog/cat should fill the other ~8.
+    # 30 dog-dose drugs + 30 exotic/food-animal drugs (varied). other_fraction is passed
+    # explicitly (0.2) so the test verifies the quota mechanism independent of the default.
     exotics = ["horse", "cattle", "swine", "rabbit", "llama", "alpaca"]
     chunks = [_dose_chunk(f"Comp{i}", ["dog"]) for i in range(30)]
     chunks += [_dose_chunk(f"Exotic{i}", [exotics[i % len(exotics)]]) for i in range(30)]
     dose = [
         c
-        for c in build_eval_set(chunks, FakeQueryPhraser(), per_flow=10, seed=0)
+        for c in build_eval_set(chunks, FakeQueryPhraser(), per_flow=10, seed=0, other_fraction=0.2)
         if c.flow == "dose"
     ]
     companion = [c for c in dose if set(c.species) <= {"dog", "cat"}]
-    assert len(companion) == 8  # ~80% companion
+    assert len(companion) == 8  # ~80% companion at other_fraction=0.2
     assert len(dose) - len(companion) == 2  # only a few exotics
 
 
@@ -116,3 +116,18 @@ def test_a_few_other_species_still_appear():
     cases = build_eval_set(chunks, FakeQueryPhraser(), per_flow=2, seed=0)
     dose_species = {tuple(c.species) for c in cases if c.flow == "dose"}
     assert ("cattle",) in dose_species  # the small 'other' quota (min 1) still includes it
+
+
+def test_other_fraction_zero_excludes_exotics():
+    # other_fraction=0 with a sufficient dog/cat pool -> strictly companion (no backfill needed).
+    chunks = [_dose_chunk(f"Comp{i}", ["dog"]) for i in range(5)]
+    chunks.append(_dose_chunk("RareDrug", ["cattle"]))
+    cases = build_eval_set(chunks, FakeQueryPhraser(), per_flow=5, seed=0, other_fraction=0.0)
+    dose_species = {tuple(c.species) for c in cases if c.flow == "dose"}
+    assert dose_species == {("dog",)}  # no exotics
+
+
+def test_zero_per_flow_returns_no_cases():
+    chunks = [_dose_chunk("D1", ["dog"]), _dose_chunk("D2", ["cattle"])]
+    cases = build_eval_set(chunks, FakeQueryPhraser(), per_flow=0, seed=0)
+    assert cases == []
