@@ -29,7 +29,9 @@ def generate(
     per_flow: int = typer.Option(25, help="Targets sampled per flow"),
     seed: int = typer.Option(0),
     other_fraction: float = typer.Option(
-        0.1, help="Max share of exotic/food-animal species per flow (rest are dog/cat)"
+        0.0,
+        help="Share of exotic/food-animal species per flow (0 = dog/cat only; "
+        "raise e.g. 0.1 to include a small capped minority)",
     ),
 ) -> None:
     """Phrase queries with Claude and write a REVIEWABLE DRAFT (not the frozen set)."""

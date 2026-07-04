@@ -204,7 +204,7 @@ def build_eval_set(
     *,
     per_flow: int,
     seed: int,
-    other_fraction: float = 0.1,
+    other_fraction: float = 0.0,
 ) -> list[EvalCase]:
     """Sample targets per flow (companion-dominant), derive labels, phrase each query.
 

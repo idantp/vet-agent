@@ -109,13 +109,22 @@ def test_companion_species_dominate_sampling():
     assert len(dose) - len(companion) == 2  # only a few exotics
 
 
-def test_a_few_other_species_still_appear():
-    # 10 dog-dose drugs + 1 cattle drug; even a tiny per_flow keeps at least one 'other'.
+def test_a_few_other_species_appear_when_other_fraction_positive():
+    # With other_fraction>0, even a tiny per_flow keeps at least one 'other' species.
     chunks = [_dose_chunk(f"Drug{i}", ["dog"]) for i in range(10)]
     chunks.append(_dose_chunk("RareDrug", ["cattle"]))
-    cases = build_eval_set(chunks, FakeQueryPhraser(), per_flow=2, seed=0)
+    cases = build_eval_set(chunks, FakeQueryPhraser(), per_flow=2, seed=0, other_fraction=0.1)
     dose_species = {tuple(c.species) for c in cases if c.flow == "dose"}
     assert ("cattle",) in dose_species  # the small 'other' quota (min 1) still includes it
+
+
+def test_default_is_dog_cat_only():
+    # Default other_fraction is 0 -> exotic/food-animal targets are excluded by default.
+    chunks = [_dose_chunk(f"Drug{i}", ["dog"]) for i in range(10)]
+    chunks.append(_dose_chunk("RareDrug", ["cattle"]))
+    cases = build_eval_set(chunks, FakeQueryPhraser(), per_flow=5, seed=0)
+    dose_species = {tuple(c.species) for c in cases if c.flow == "dose"}
+    assert dose_species == {("dog",)}  # no exotics by default
 
 
 def test_other_fraction_zero_excludes_exotics():
