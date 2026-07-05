@@ -12,19 +12,12 @@ class ModelSpec:
     matryoshka_dim: int | None = None  # truncate native dim down to this
 
 
-# All three normalized to 768-d so the benchmark compares like-for-like.
-# MedEmbed-base is a direct fine-tune of bge-base-en-v1.5 (isolates the medical gain);
-# Qwen3-0.6B is a modern strong-model reference, truncated from its native dim.
-# Verify exact hf ids / query-prompt format against the live model cards before first run.
+# Both normalized to 768-d so the benchmark compares like-for-like.
+# MedEmbed-base is a direct fine-tune of bge-base-en-v1.5 (isolates the medical gain).
+# Verify exact hf ids against the live model cards before first run.
 MODEL_REGISTRY: dict[str, "ModelSpec"] = {
     "medembed-base": ModelSpec("abhinand/MedEmbed-base-v0.1", dim=768),
     "bge-base": ModelSpec("BAAI/bge-base-en-v1.5", dim=768),
-    "qwen3-0.6b": ModelSpec(
-        "Qwen/Qwen3-Embedding-0.6B",
-        dim=768,
-        query_prefix="Instruct: Given a query, retrieve relevant passages.\nQuery: ",
-        matryoshka_dim=768,
-    ),
 }
 
 
@@ -41,10 +34,14 @@ class SentenceTransformerEmbedder:
     def __init__(self, key: str, spec: ModelSpec) -> None:
         from sentence_transformers import SentenceTransformer  # lazy: avoids import cost
 
+        import torch
+
+        device = "mps" if torch.backends.mps.is_available() else None
+
         self.name = key
         self.dim = spec.dim
         self._spec = spec
-        self._model = SentenceTransformer(spec.hf_id)
+        self._model = SentenceTransformer(spec.hf_id, device=device)
 
     def _encode(self, texts: list[str]) -> list[list[float]]:
         # Show a live progress bar for large batches (the corpus embed) but not for a

@@ -37,8 +37,8 @@ def _point(
 
 
 def test_collection_name_is_model_suffixed_and_sanitized():
-    assert collection_name("vet_chunks", "qwen3-0.6b") == "vet_chunks__qwen3_0_6b"
     assert collection_name("vet_chunks", "medembed-base") == "vet_chunks__medembed_base"
+    assert collection_name("vet_chunks", "bge-base") == "vet_chunks__bge_base"
 
 
 def test_upsert_then_existing_hashes_roundtrip():

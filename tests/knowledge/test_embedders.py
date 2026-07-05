@@ -10,12 +10,10 @@ from vet_agent.knowledge.embedders import (
 )
 
 
-def test_registry_has_three_768d_candidates():
-    assert set(MODEL_REGISTRY) == {"medembed-base", "bge-base", "qwen3-0.6b"}
+def test_registry_has_768d_candidates():
+    assert set(MODEL_REGISTRY) == {"medembed-base", "bge-base"}
     for spec in MODEL_REGISTRY.values():
         assert spec.dim == 768
-    # Qwen3 is natively larger -> truncated via Matryoshka to the common 768.
-    assert MODEL_REGISTRY["qwen3-0.6b"].matryoshka_dim == 768
     assert MODEL_REGISTRY["medembed-base"].matryoshka_dim is None
 
 

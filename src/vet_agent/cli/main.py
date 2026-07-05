@@ -92,7 +92,10 @@ def ingest(
 
 @app.command()
 def embed(
-    models: str = typer.Option("medembed-base", help="Comma-separated model keys"),  # noqa: B008
+    models: str = typer.Option(
+        "medembed-base",
+        help=f"Comma-separated model keys ({', '.join(sorted(MODEL_REGISTRY))})",
+    ),  # noqa: B008
     chunks: Path = typer.Option(Path("data/ingest/chunks.json")),  # noqa: B008
     cache_dir: Path = typer.Option(Path("data/embeddings")),  # noqa: B008
 ) -> None:
@@ -119,7 +122,7 @@ def embed(
 def benchmark(
     chunks: Path = typer.Option(Path("data/ingest/chunks.json")),  # noqa: B008
     eval_set: Path = typer.Option(Path("data/eval/retrieval_eval.yaml")),  # noqa: B008
-    models: str = typer.Option("medembed-base,bge-base,qwen3-0.6b"),  # noqa: B008
+    models: str = typer.Option("medembed-base,bge-base"),  # noqa: B008
     ks: str = typer.Option("1,3,5,10", help="Comma-separated k cutoffs"),  # noqa: B008
     cache_dir: Path = typer.Option(Path("data/embeddings")),  # noqa: B008
     out_dir: Path = typer.Option(Path("data/eval")),  # noqa: B008

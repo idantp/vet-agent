@@ -33,7 +33,7 @@ def embed_corpus(
         logger.info("[%s] reusing cached embeddings for %d chunks", embedder.name, len(keys))
         return np.asarray(np.load(cache_path)["vectors"], dtype=np.float32), keys
     logger.info(
-        "[%s] embedding %d chunks — this is the one-time slow step (minutes on CPU); "
+        "[%s] embedding %d chunks — this is the one-time slow step (a few minutes); "
         "a progress bar follows ...",
         embedder.name,
         len(chunks),
