@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     data_dir: Path = Path("data")
 
     # Knowledge layer (Phase 2)
-    embedding_model: str = "medembed-base"
+    embedding_model: str = "bge-base"
     qdrant_collection_prefix: str = "vet_chunks"
     rerank_enabled: bool = False
     reranker_model: str = "bge-reranker-v2-m3"

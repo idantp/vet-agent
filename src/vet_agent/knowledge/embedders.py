@@ -32,9 +32,8 @@ class SentenceTransformerEmbedder:
     """Embedder backed by a `sentence-transformers` SentenceTransformer model."""
 
     def __init__(self, key: str, spec: ModelSpec) -> None:
-        from sentence_transformers import SentenceTransformer  # lazy: avoids import cost
-
         import torch
+        from sentence_transformers import SentenceTransformer  # lazy: avoids import cost
 
         device = "mps" if torch.backends.mps.is_available() else None
 

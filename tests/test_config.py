@@ -25,7 +25,7 @@ def test_env_override(monkeypatch):
 
 def test_phase2_defaults():
     s = Settings(_env_file=None)
-    assert s.embedding_model == "medembed-base"
+    assert s.embedding_model == "bge-base"  # benchmark winner (general beat the medical fine-tune)
     assert s.qdrant_collection_prefix == "vet_chunks"
     assert s.rerank_enabled is False
     assert s.reranker_model == "bge-reranker-v2-m3"

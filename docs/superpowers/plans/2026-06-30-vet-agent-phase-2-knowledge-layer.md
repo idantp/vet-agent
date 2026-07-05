@@ -2221,7 +2221,7 @@ Expected: writes ~60–75 draft cases (25 per flow, minus any with no derivable 
 
 - [ ] **Step 3b: Review the draft (human gate — spec §10)**
 
-Open `data/eval/retrieval_eval.draft.yaml` and review the **`query` phrasings** in one pass: fix any that are awkward, leading, or off-target, and delete weak cases. Leave `relevant_logical_keys` untouched (they're derived). Confirm queries read like real vet questions and the labels are non-empty and match the drug/section/species.
+Open `data/eval/retrieval_eval.draft.yaml` and review the `**query` phrasings** in one pass: fix any that are awkward, leading, or off-target, and delete weak cases. Leave `relevant_logical_keys` untouched (they're derived). Confirm queries read like real vet questions and the labels are non-empty and match the drug/section/species.
 
 - [ ] **Step 3c: Promote the reviewed draft to the frozen set**
 
@@ -2293,3 +2293,4 @@ git commit -m "feat(eval): commit frozen eval set + benchmark scorecard; pin def
 - The benchmark embeds the full corpus per model in `vet-agent benchmark`; for three models this is a few minutes on CPU (cached after first run). Acceptable for a one-time choice.
 - `retrieve`/`load` assume the configured model's collection exists; a friendly "collection missing — run `vet-agent load`" message is a nice-to-have, deferred.
 - Exact Qwen3 query-prompt format and current `sentence-transformers` API are confirmed against live model cards at implementation time (spec §5); adjust `MODEL_REGISTRY` if the card differs.
+
