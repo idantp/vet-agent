@@ -1,0 +1,2155 @@
+- query: What's the gonadorelin dose for a cat with suspected cystic ovarian disease?
+  flow: dose
+  drug: Gonadorelin
+  section: doses
+  species:
+  - cat
+  relevant_logical_keys:
+  - gonadorelin|doses|cat|0
+- query: What's the induction dose of thiopental (mg/kg IV) for dogs and cats, and
+    should it be given to effect rather than as a fixed bolus?
+  flow: dose
+  drug: Thiopental
+  section: doses
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - thiopental|doses|cat+dog|0
+- query: What's the recommended IV infusion rate/duration and concentration for administering
+    ceftriaxone to a dog?
+  flow: dose
+  drug: Ceftriaxone
+  section: doses
+  species:
+  - dog
+  relevant_logical_keys:
+  - ceftriaxone|doses|dog|0
+- query: What's the ethanol CRI dosing protocol for a cat with suspected ethylene
+    glycol toxicity — using the 20% solution, and what's the alternative dosing if
+    I only have a 7% solution on hand?
+  flow: dose
+  drug: Ethanol
+  section: doses
+  species:
+  - cat
+  relevant_logical_keys:
+  - ethanol|doses|cat|0
+  - ethanol|doses|cat|1
+- query: What's the dicloxacillin dose for staphylococcal pyoderma in a dog, and is
+    there an established dose for cats?
+  flow: dose
+  drug: Dicloxacillin
+  section: doses
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - dicloxacillin|doses|cat+dog|0
+- query: What's the mitoxantrone dose for a dog, and what monitoring/safety precautions
+    should I follow given its chemotherapy toxicity risks?
+  flow: dose
+  drug: Mitoxantrone
+  section: doses
+  species:
+  - dog
+  relevant_logical_keys:
+  - mitoxantrone|doses|dog|0
+- query: What's the zidovudine dose for a FIV-positive cat, and should I be cautious
+    about using the higher end of the dosing range?
+  flow: dose
+  drug: Zidovudine
+  section: doses
+  species:
+  - cat
+  relevant_logical_keys:
+  - zidovudine|doses|cat|0
+- query: What's the extra-label gemfibrozil dose for diet-refractory hypertriglyceridemia
+    in dogs and cats, and should it be given with or before meals?
+  flow: dose
+  drug: Gemfibrozil
+  section: doses
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - gemfibrozil|doses|cat+dog|0
+- query: What's the levamisole dose for a dog with systemic lupus erythematosus being
+    used adjunctively with prednisone?
+  flow: dose
+  drug: Levamisole
+  section: doses
+  species:
+  - dog
+  relevant_logical_keys:
+  - levamisole|doses|dog|0
+- query: What's the extra-label mycophenolate dose for a cat with immune-mediated
+    hemolytic anemia, and how should it be combined with prednisolone?
+  flow: dose
+  drug: Mycophenolate
+  section: doses
+  species:
+  - cat
+  relevant_logical_keys:
+  - mycophenolate|doses|cat|0
+- query: What's the recommended starting dose of North American coral snake antivenom
+    for a dog or cat presenting with suspected envenomation, and does dosing scale
+    with body weight or with estimated venom load?
+  flow: dose
+  drug: Antivenom, North American Coral Snake
+  section: doses
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - antivenom, north american coral snake|doses|cat+dog|0
+- query: What's the telmisartan dose for a dog with proteinuric CKD, and how high
+    can it be titrated if proteinuria persists?
+  flow: dose
+  drug: Telmisartan
+  section: doses
+  species:
+  - dog
+  relevant_logical_keys:
+  - telmisartan|doses|dog|0
+- query: What's the imidocarb dose for treating babesiosis in a cat, and is it given
+    IM/SC only (not IV)?
+  flow: dose
+  drug: Imidocarb
+  section: doses
+  species:
+  - cat
+  relevant_logical_keys:
+  - imidocarb|doses|cat|0
+  - imidocarb|doses|cat|1
+- query: What's the extra-label dextromethorphan dose for a dog with allergic dermatitis
+    and self-directed scratching/chewing behavior?
+  flow: dose
+  drug: Dextromethorphan
+  section: doses
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - dextromethorphan|doses|dog|0
+  - dextromethorphan|doses|cat|0
+  - dextromethorphan|doses|cat+dog|0
+  - dextromethorphan|doses|cat+dog|1
+- query: What's the recommended dose of potassium citrate for a dog with calcium oxalate
+    urolithiasis, and is there any evidence-based dosing protocol to go by?
+  flow: dose
+  drug: Citrate, Potassium
+  section: doses
+  species:
+  - dog
+  relevant_logical_keys:
+  - citrate, potassium|doses|dog|0
+- query: What's the misoprostol dose for a cat needing gastroprotection from aspirin
+    therapy — is it still around 3 µg/kg PO q8-12h like in dogs?
+  flow: dose
+  drug: Misoprostol
+  section: doses
+  species:
+  - cat
+  relevant_logical_keys:
+  - misoprostol|doses|cat|0
+- query: What's the L-theanine dose for anxiety in a dog vs. a cat—mg/dog or mg/cat,
+    not mg/kg, right?
+  flow: dose
+  drug: L- Theanine
+  section: doses
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - l- theanine|doses|cat+dog|0
+- query: What is the hCG (Chorulon) dose for treating cryptorchidism or as a GnRH-alternative
+    in a male dog?
+  flow: dose
+  drug: Chorionic Gonadotropin
+  section: doses
+  species:
+  - dog
+  relevant_logical_keys:
+  - chorionic gonadotropin|doses|dog|0
+- query: What HCTZ dose would you use in a cat for adjunctive diuretic therapy when
+    refractory to loop diuretics alone?
+  flow: dose
+  drug: Hydrochlorothiazide
+  section: doses
+  species:
+  - cat
+  relevant_logical_keys:
+  - hydrochlorothiazide|doses|cat|0
+- query: What's the HES colloid bolus/infusion dose (mL/kg) for treating hypovolemic
+    shock in dogs vs cats, and how should the initial 10–20 mL be given?
+  flow: dose
+  drug: Hydroxyethyl Starch (HES) Colloids
+  section: doses
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - hydroxyethyl starch (hes) colloids|doses|cat+dog|0
+- query: What testosterone dose would you use for a dog, given that testosterone propionate
+    is no longer commercially available in the US?
+  flow: dose
+  drug: Testosterone
+  section: doses
+  species:
+  - dog
+  relevant_logical_keys:
+  - testosterone|doses|dog|0
+- query: Is there an established toceranib dosing guideline for cats, or is feline
+    use still considered extra-label pending oncologist consultation?
+  flow: dose
+  drug: Toceranib
+  section: doses
+  species:
+  - cat
+  relevant_logical_keys:
+  - toceranib|doses|cat|0
+- query: What's the initial epoetin alfa dose and frequency for a cat or dog with
+    anemia secondary to end-stage CKD, and how should I titrate it based on PCV response?
+  flow: dose
+  drug: Epoetin Alfa
+  section: doses
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - epoetin alfa|doses|cat+dog|0
+- query: What's the paromomycin dose for a dog with cryptosporidiosis — is it dosed
+    once or twice daily, and for how many days?
+  flow: dose
+  drug: Paromomycin
+  section: doses
+  species:
+  - dog
+  relevant_logical_keys:
+  - paromomycin|doses|dog|0
+- query: What's the marbofloxacin dose and duration for a cat with a UTI/bacterial
+    cystitis?
+  flow: dose
+  drug: Marbofloxacin
+  section: doses
+  species:
+  - cat
+  relevant_logical_keys:
+  - marbofloxacin|doses|cat|0
+  - marbofloxacin|doses|cat|1
+- query: Does North American coral snake antivenom provide cross-protection against
+    Texas coral snake envenomation, or is it only effective for the Eastern coral
+    snake species?
+  flow: indication
+  drug: Antivenom, North American Coral Snake
+  section: indications
+  species:
+  - all
+  relevant_logical_keys:
+  - antivenom, north american coral snake|indications|all|0
+- query: Is mannitol indicated for helping flush calcium oxalate uroliths in a stable
+    cat with minimal renal compromise?
+  flow: indication
+  drug: Mannitol
+  section: indications
+  species:
+  - cat
+  relevant_logical_keys:
+  - mannitol|indications|cat|0
+- query: Is chlorpheniramine an effective option for managing pruritus from allergic
+    dermatitis or insect-bite hypersensitivity in dogs and cats?
+  flow: indication
+  drug: Chlorpheniramine
+  section: indications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - chlorpheniramine|indications|cat+dog|0
+  - chlorpheniramine|indications|cat+dog|1
+- query: Is yohimbine effective for reversing xylazine sedation in a dog, and can
+    it also be used to help manage amitraz toxicity or given prophylactically before
+    an amitraz dip?
+  flow: indication
+  drug: Y ohimbine
+  section: indications
+  species:
+  - dog
+  relevant_logical_keys:
+  - y ohimbine|indications|dog|0
+- query: Is aluminum hydroxide indicated for managing hyperphosphatemia in a dog with
+    chronic kidney disease that isn't controlled by diet alone?
+  flow: indication
+  drug: Aluminum Hydroxide
+  section: indications
+  species:
+  - all
+  relevant_logical_keys:
+  - aluminum hydroxide|indications|all|0
+- query: Is ketamine FDA-approved as a sole anesthetic agent in cats for minor surgical
+    procedures that don't require muscle relaxation?
+  flow: indication
+  drug: Ketamine
+  section: indications
+  species:
+  - cat
+  relevant_logical_keys:
+  - ketamine|indications|cat|0
+- query: Is gemcitabine effective as a single agent for treating solid tumors in dogs,
+    and does it provide any benefit in canine lymphoma or nonresectable hepatocellular
+    carcinoma?
+  flow: indication
+  drug: Gemcitabine
+  section: indications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - gemcitabine|indications|cat+dog|0
+  - gemcitabine|indications|cat+dog|1
+- query: Is spironolactone indicated as an add-on to conventional therapy in a dog
+    with CHF secondary to myxomatous mitral valve disease, and does it improve survival?
+  flow: indication
+  drug: Spironolactone
+  section: indications
+  species:
+  - dog
+  relevant_logical_keys:
+  - spironolactone|indications|dog|0
+  - spironolactone|indications|dog|1
+- query: Is kaolin/pectin actually effective as an antidiarrheal in dogs, or is its
+    use more empirical at this point?
+  flow: indication
+  drug: Kaolin/Pectin
+  section: indications
+  species:
+  - all
+  relevant_logical_keys:
+  - kaolin/pectin|indications|all|0
+- query: Is topical ophthalmic acyclovir actually effective for feline herpesvirus-1
+    conjunctivitis in cats, or are its in vitro efficacy and dosing frequency too
+    limiting for practical use?
+  flow: indication
+  drug: Acyclovir Ophthalmic
+  section: indications
+  species:
+  - cat
+  relevant_logical_keys:
+  - acyclovir ophthalmic|indications|cat|0
+- query: Is cabergoline an appropriate option for pregnancy termination in the second
+    half of gestation in a dog, or is it better suited for cases like pseudopregnancy
+    and pre-mammary tumor surgery?
+  flow: indication
+  drug: Cabergoline
+  section: indications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - cabergoline|indications|cat+dog|0
+- query: Is meglumine antimoniate combined with allopurinol still considered first-line
+    therapy for confirmed leishmaniasis in dogs, and how does its efficacy compare
+    to a miltefosine/allopurinol combination?
+  flow: indication
+  drug: Meglumine Antimoniate
+  section: indications
+  species:
+  - dog
+  relevant_logical_keys:
+  - meglumine antimoniate|indications|dog|0
+- query: Is trimeprazine/prednisolone a reasonable choice for a dog with allergic
+    dermatitis-related pruritus, and does it really allow for a lower prednisolone
+    dose than steroid alone?
+  flow: indication
+  drug: Trimeprazine/Prednisolone
+  section: indications
+  species:
+  - all
+  relevant_logical_keys:
+  - trimeprazine/prednisolone|indications|all|0
+- query: Is insulin aspart an appropriate choice for a cat in diabetic ketoacidosis,
+    or would regular insulin still be preferred?
+  flow: indication
+  drug: Insulin, Aspart
+  section: indications
+  species:
+  - cat
+  relevant_logical_keys:
+  - insulin, aspart|indications|cat|0
+  - insulin, aspart|indications|cat|1
+- query: Is vincristine appropriate as part of a CHOP protocol for lymphoma in this
+    cat, or is it primarily indicated for other neoplasms like hemangiosarcoma or
+    TVT in dogs?
+  flow: indication
+  drug: Vincristine
+  section: indications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - vincristine|indications|cat+dog|0
+  - vincristine|indications|cat+dog|1
+- query: Is osateron approved for treating benign prostatic hyperplasia in male dogs,
+    and are there other emerging indications I should know about?
+  flow: indication
+  drug: Osaterone
+  section: indications
+  species:
+  - dog
+  relevant_logical_keys:
+  - osaterone|indications|dog|0
+- query: Is quinacrine still a reasonable alternative for treating giardiasis in dogs,
+    or has it been fully phased out in the US?
+  flow: indication
+  drug: Quinacrine
+  section: indications
+  species:
+  - all
+  relevant_logical_keys:
+  - quinacrine|indications|all|0
+- query: Is topical mitomycin indicated as an adjunct after glaucoma drainage shunt
+    placement in a cat, and does it help prevent recurrence of ocular surface squamous
+    cell carcinoma following surgical excision?
+  flow: indication
+  drug: Mitomycin Ophthalmic
+  section: indications
+  species:
+  - cat
+  relevant_logical_keys:
+  - mitomycin ophthalmic|indications|all|0
+  - mitomycin ophthalmic|indications|cat+dog+horse|0
+  - mitomycin ophthalmic|indications|all|1
+  - mitomycin ophthalmic|indications|all|2
+  - mitomycin ophthalmic|indications|all|3
+  - mitomycin ophthalmic|indications|all|4
+  - mitomycin ophthalmic|indications|cat+dog|0
+  - mitomycin ophthalmic|indications|cat+dog+horse|1
+  - mitomycin ophthalmic|indications|cat+dog+horse|2
+  - mitomycin ophthalmic|indications|all|5
+  - mitomycin ophthalmic|indications|cat|0
+  - mitomycin ophthalmic|indications|cat+dog+horse|3
+  - mitomycin ophthalmic|indications|all|6
+  - mitomycin ophthalmic|indications|cat+dog+horse|4
+  - mitomycin ophthalmic|indications|cat+dog+horse|5
+  - mitomycin ophthalmic|indications|cat+dog+horse|6
+  - mitomycin ophthalmic|indications|cat+dog+horse|7
+  - mitomycin ophthalmic|indications|all|7
+  - mitomycin ophthalmic|indications|cat+dog+horse|8
+  - mitomycin ophthalmic|indications|all|8
+  - mitomycin ophthalmic|indications|all|9
+  - mitomycin ophthalmic|indications|all|10
+  - mitomycin ophthalmic|indications|cat+dog+horse|9
+  - mitomycin ophthalmic|indications|all|11
+  - mitomycin ophthalmic|indications|all|12
+  - mitomycin ophthalmic|indications|all|13
+  - mitomycin ophthalmic|indications|all|14
+  - mitomycin ophthalmic|indications|all|15
+  - mitomycin ophthalmic|indications|all|16
+  - mitomycin ophthalmic|indications|all|17
+  - mitomycin ophthalmic|indications|all|18
+  - mitomycin ophthalmic|indications|all|19
+  - mitomycin ophthalmic|indications|all|20
+  - mitomycin ophthalmic|indications|all|21
+  - mitomycin ophthalmic|indications|cat+dog|1
+  - mitomycin ophthalmic|indications|all|22
+  - mitomycin ophthalmic|indications|all|23
+  - mitomycin ophthalmic|indications|all|24
+  - mitomycin ophthalmic|indications|all|25
+  - mitomycin ophthalmic|indications|cat+dog+horse|10
+  - mitomycin ophthalmic|indications|cat+dog+horse|11
+  - mitomycin ophthalmic|indications|cat+dog+horse|12
+  - mitomycin ophthalmic|indications|all|26
+  - mitomycin ophthalmic|indications|cat+dog|2
+  - mitomycin ophthalmic|indications|cat+horse+poultry|0
+  - mitomycin ophthalmic|indications|cat+horse+poultry|1
+  - mitomycin ophthalmic|indications|all|27
+  - mitomycin ophthalmic|indications|cat+horse|0
+  - mitomycin ophthalmic|indications|all|28
+  - mitomycin ophthalmic|indications|cat+dog|3
+  - mitomycin ophthalmic|indications|all|29
+  - mitomycin ophthalmic|indications|all|30
+  - mitomycin ophthalmic|indications|all|31
+  - mitomycin ophthalmic|indications|all|32
+  - mitomycin ophthalmic|indications|all|33
+  - mitomycin ophthalmic|indications|all|34
+  - mitomycin ophthalmic|indications|cat+dog+rabbit|0
+  - mitomycin ophthalmic|indications|cat+dog|4
+  - mitomycin ophthalmic|indications|cat+dog|5
+  - mitomycin ophthalmic|indications|cat+dog|6
+  - mitomycin ophthalmic|indications|cat+dog|7
+  - mitomycin ophthalmic|indications|cat+dog|8
+  - mitomycin ophthalmic|indications|cat+dog|9
+  - mitomycin ophthalmic|indications|all|35
+  - mitomycin ophthalmic|indications|cat+dog|10
+  - mitomycin ophthalmic|indications|all|36
+  - mitomycin ophthalmic|indications|cat|1
+  - mitomycin ophthalmic|indications|cat+dog+horse|13
+  - mitomycin ophthalmic|indications|cat+dog+horse|14
+  - mitomycin ophthalmic|indications|all|37
+  - mitomycin ophthalmic|indications|all|38
+  - mitomycin ophthalmic|indications|all|39
+  - mitomycin ophthalmic|indications|all|40
+  - mitomycin ophthalmic|indications|all|41
+  - mitomycin ophthalmic|indications|all|42
+  - mitomycin ophthalmic|indications|all|43
+  - mitomycin ophthalmic|indications|all|44
+  - mitomycin ophthalmic|indications|all|45
+  - mitomycin ophthalmic|indications|all|46
+  - mitomycin ophthalmic|indications|all|47
+  - mitomycin ophthalmic|indications|all|48
+  - mitomycin ophthalmic|indications|all|49
+  - mitomycin ophthalmic|indications|all|50
+  - mitomycin ophthalmic|indications|all|51
+  - mitomycin ophthalmic|indications|all|52
+  - mitomycin ophthalmic|indications|cat+dog|11
+  - mitomycin ophthalmic|indications|cat+dog|12
+  - mitomycin ophthalmic|indications|cat+dog|13
+  - mitomycin ophthalmic|indications|all|53
+- query: Is taurine supplementation indicated for DCM in a golden retriever even if
+    the dog isn't documented as taurine-deficient, and what's its role in preventing
+    DCM and retinal degeneration in cats?
+  flow: indication
+  drug: Taurine
+  section: indications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - taurine|indications|cat+dog|0
+- query: In a dog with a chronic cough, what are the indications for using aminophylline,
+    and can it also be used for bradyarrhythmias like sick sinus syndrome?
+  flow: indication
+  drug: Aminophylline
+  section: indications
+  species:
+  - dog
+  relevant_logical_keys:
+  - aminophylline|indications|dog|0
+- query: Are saline cathartics like sodium sulfate indicated for reducing toxin absorption
+    in a small animal with acute toxicant ingestion, or are they better reserved for
+    constipation management?
+  flow: indication
+  drug: Saline Cathartics
+  section: indications
+  species:
+  - all
+  relevant_logical_keys:
+  - saline cathartics|indications|all|0
+- query: Is frunevetmab indicated for long-term control of osteoarthritis pain in
+    an older cat, and how soon after injection should I expect to see improvement
+    in activity level?
+  flow: indication
+  drug: Frunevetmab
+  section: indications
+  species:
+  - cat
+  relevant_logical_keys:
+  - frunevetmab|indications|cat|0
+- query: Is oclacitinib FDA-approved for pruritus control in cats, or is its labeled
+    indication limited to dogs with allergic dermatitis?
+  flow: indication
+  drug: Oclacitinib
+  section: indications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - oclacitinib|indications|cat+dog|0
+  - oclacitinib|indications|cat+dog|1
+- query: Is verdinexor FDA-approved for treating lymphoma in dogs, and what response
+    rate can I expect in a treatment-naïve patient?
+  flow: indication
+  drug: Verdinexor
+  section: indications
+  species:
+  - dog
+  relevant_logical_keys:
+  - verdinexor|indications|dog|0
+- query: Is dapsone a reasonable adjunctive treatment for a dog with a suspected brown
+    recluse spider bite, and how established is its efficacy for that use?
+  flow: indication
+  drug: Dapsone
+  section: indications
+  species:
+  - all
+  relevant_logical_keys:
+  - dapsone|indications|all|0
+- query: Is sotalol contraindicated in a dog with sick sinus syndrome or preexisting
+    hypokalemia before I start it for ventricular arrhythmia?
+  flow: contraindication
+  drug: Sotalol
+  section: contraindications
+  species:
+  - all
+  relevant_logical_keys:
+  - sotalol|contraindications|all|0
+- query: Is it safe to start griseofulvin in a pregnant queen with ringworm, or should
+    I hold off and use topical treatment instead?
+  flow: contraindication
+  drug: Griseofulvin
+  section: contraindications
+  species:
+  - cat
+  relevant_logical_keys:
+  - griseofulvin|contraindications|cat|0
+- query: Are there any true contraindications to fluralaner in dogs or cats, or is
+    it more a "use with caution" situation in patients with a seizure history?
+  flow: contraindication
+  drug: Fluralaner
+  section: contraindications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - fluralaner|contraindications|cat+dog|0
+  - fluralaner|contraindications|cat+dog|1
+- query: Is tigilanol tiglate contraindicated in this dog given known hypersensitivity
+    to propylene glycol, or should I be more concerned about the tumor's size/location
+    (e.g., near the elbow) precluding safe injection?
+  flow: contraindication
+  drug: Tigilanol Tiglate
+  section: contraindications
+  species:
+  - dog
+  relevant_logical_keys:
+  - tigilanol tiglate|contraindications|dog|0
+  - tigilanol tiglate|contraindications|dog|1
+  - tigilanol tiglate|contraindications|dog|2
+  - tigilanol tiglate|contraindications|dog|3
+- query: Is cholestyramine safe to use in a patient with suspected biliary obstruction
+    or cholelithiasis, or should I avoid it given her bile duct issues?
+  flow: contraindication
+  drug: Cholestyramine
+  section: contraindications
+  species:
+  - all
+  relevant_logical_keys:
+  - cholestyramine|contraindications|all|0
+- query: Is carboplatin safe to use in this cat if it currently has significant myelosuppression,
+    or should I hold treatment until counts recover?
+  flow: contraindication
+  drug: Carboplatin
+  section: contraindications
+  species:
+  - cat
+  relevant_logical_keys:
+  - carboplatin|contraindications|cat|0
+  - carboplatin|contraindications|cat|1
+- query: Are there any specific contraindications for using alfaxalone in cats or
+    dogs, such as combining it with propofol or other IV anesthetics?
+  flow: contraindication
+  drug: Alfaxalone
+  section: contraindications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - alfaxalone|contraindications|cat+dog|0
+  - alfaxalone|contraindications|cat+dog|1
+  - alfaxalone|contraindications|cat+dog|2
+  - alfaxalone|contraindications|cat+dog|3
+- query: Is there any history of a prior hypersensitivity reaction to iohexol that
+    would make this dog an outright contraindication rather than just a "use with
+    caution" case?
+  flow: contraindication
+  drug: Iohexol
+  section: contraindications
+  species:
+  - dog
+  relevant_logical_keys:
+  - iohexol|contraindications|dog|0
+- query: Is praziquantel safe to use in a 3-week-old kitten, or should I hold off
+    until it's older?
+  flow: contraindication
+  drug: Praziquantel/Praziquantel Combination Products
+  section: contraindications
+  species:
+  - all
+  relevant_logical_keys:
+  - praziquantel/praziquantel combination products|contraindications|all|0
+- query: Are there any contraindications to using topical ophthalmic levofloxacin
+    in a cat, including concerns about retinal toxicity seen with other fluoroquinolones?
+  flow: contraindication
+  drug: Levofloxacin Ophthalmic
+  section: contraindications
+  species:
+  - cat
+  relevant_logical_keys:
+  - levofloxacin ophthalmic|contraindications|cat|0
+- query: Is it safe to start cyclosporine in an FIV-positive cat, and are there any
+    weight or age cutoffs I should be aware of before prescribing it in cats or dogs?
+  flow: contraindication
+  drug: Cyclosporine (Systemic)
+  section: contraindications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - cyclosporine (systemic)|contraindications|cat+dog|0
+  - cyclosporine (systemic)|contraindications|cat+dog|1
+  - cyclosporine (systemic)|contraindications|cat+dog|2
+- query: Is it safe to give vincristine to this dog given its current neutropenia,
+    or should I hold off until counts recover?
+  flow: contraindication
+  drug: Vincristine
+  section: contraindications
+  species:
+  - dog
+  relevant_logical_keys:
+  - vincristine|contraindications|dog|0
+  - vincristine|contraindications|dog|1
+- query: Is albuterol safe to use in a cat with a history of hypertrophic cardiomyopathy
+    and known arrhythmias?
+  flow: contraindication
+  drug: Albuterol
+  section: contraindications
+  species:
+  - all
+  relevant_logical_keys:
+  - albuterol|contraindications|all|0
+- query: Is bismuth subsalicylate safe to use in a cat with diarrhea, given the salicylate
+    component, or should I avoid it in this species altogether?
+  flow: contraindication
+  drug: Bismuth Subsalicylate
+  section: contraindications
+  species:
+  - cat
+  relevant_logical_keys:
+  - bismuth subsalicylate|contraindications|cat|0
+- query: Are there any absolute contraindications to gabapentin in dogs or cats, and
+    how should I adjust dosing in a patient with renal insufficiency?
+  flow: contraindication
+  drug: Gabapentin
+  section: contraindications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - gabapentin|contraindications|cat+dog|0
+  - gabapentin|contraindications|cat+dog|1
+- query: Is buspirone safe to use in a dog with known hepatic impairment, or should
+    I choose an alternative anxiolytic given the risk of reduced clearance and increased
+    adverse effects?
+  flow: contraindication
+  drug: Buspirone
+  section: contraindications
+  species:
+  - dog
+  relevant_logical_keys:
+  - buspirone|contraindications|dog|0
+- query: Is it safe to use isotretinoin in this household if there's a pregnant woman
+    living with the dog, even though the dog itself isn't pregnant?
+  flow: contraindication
+  drug: Isotretinoin
+  section: contraindications
+  species:
+  - all
+  relevant_logical_keys:
+  - isotretinoin|contraindications|all|0
+- query: Is it safe to give meperidine to a cat that's been on an MAOI, or one with
+    suspected toxin-induced diarrhea?
+  flow: contraindication
+  drug: Meperidine
+  section: contraindications
+  species:
+  - cat
+  relevant_logical_keys:
+  - meperidine|contraindications|cat|0
+  - meperidine|contraindications|cat|1
+  - meperidine|contraindications|cat|2
+- query: Is it safe to give the feline-labeled injectable lufenuron product to a dog,
+    or should I only use it in cats per label?
+  flow: contraindication
+  drug: Lufenuron/Lufenuron Combination Products
+  section: contraindications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - lufenuron/lufenuron combination products|contraindications|cat+dog|0
+  - lufenuron/lufenuron combination products|contraindications|cat+dog|1
+- query: Is imidapril contraindicated in this dog given its history of hypertrophic
+    obstructive cardiomyopathy, or would that preclude use?
+  flow: contraindication
+  drug: Imidapril
+  section: contraindications
+  species:
+  - dog
+  relevant_logical_keys:
+  - imidapril|contraindications|dog|0
+- query: Is it safe to use ronidazole in a cat with a known metronidazole hypersensitivity,
+    or does cross-reactivity rule it out?
+  flow: contraindication
+  drug: Ronidazole
+  section: contraindications
+  species:
+  - all
+  relevant_logical_keys:
+  - ronidazole|contraindications|all|0
+- query: Is IM methylprednisolone acetate contraindicated in this cat given her history
+    of hyperadrenocorticism, or would another form/route be safer?
+  flow: contraindication
+  drug: Methylprednisolone
+  section: contraindications
+  species:
+  - cat
+  relevant_logical_keys:
+  - methylprednisolone|contraindications|cat|0
+  - methylprednisolone|contraindications|cat|1
+  - methylprednisolone|contraindications|cat|2
+- query: Is protamine zinc recombinant human insulin (PZI) contraindicated in this
+    cat with a history of hypoglycemic episodes, or if she's shown hypersensitivity
+    to human insulin, and should I avoid it if she presents in severe DKA?
+  flow: contraindication
+  drug: Insulin, Protamine Zinc
+  section: contraindications
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - insulin, protamine zinc|contraindications|cat+dog|0
+  - insulin, protamine zinc|contraindications|cat+dog|1
+- query: Is Propionibacterium acnes injection safe to use in a dog with a known cardiac
+    condition, or is that a contraindication?
+  flow: contraindication
+  drug: Propionibacterium Acnes Injection
+  section: contraindications
+  species:
+  - dog
+  relevant_logical_keys:
+  - propionibacterium acnes injection|contraindications|dog|0
+- query: Is zinc supplementation contraindicated in a patient with known copper deficiency,
+    or can it be used with caution?
+  flow: contraindication
+  drug: Zinc (Systemic)
+  section: contraindications
+  species:
+  - all
+  relevant_logical_keys:
+  - zinc (systemic)|contraindications|all|0
+- query: Is chlorpromazine safe to use in a pregnant or nursing dog, or does it carry
+    embryotoxic risk and pass into milk?
+  flow: reproductive_safety
+  drug: Chlorpromazine
+  section: reproductive_safety
+  species:
+  - all
+  relevant_logical_keys:
+  - chlorpromazine|reproductive_safety|all|0
+- query: Is it safe to use frunevetmab for OA pain in a breeding queen, or should
+    I avoid it in pregnant or lactating cats?
+  flow: reproductive_safety
+  drug: Frunevetmab
+  section: reproductive_safety
+  species:
+  - cat
+  relevant_logical_keys:
+  - frunevetmab|reproductive_safety|cat|0
+- query: Has maropitant's safety been established for use in pregnant, lactating,
+    or breeding dogs or cats, or should it only be used if the benefit outweighs the
+    risk to offspring?
+  flow: reproductive_safety
+  drug: Maropitant
+  section: reproductive_safety
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - maropitant|reproductive_safety|cat+dog|0
+- query: Has afoxolaner's safety actually been established for use in a breeding or
+    pregnant bitch, or should I be weighing risk-benefit here?
+  flow: reproductive_safety
+  drug: Afoxolaner
+  section: reproductive_safety
+  species:
+  - dog
+  relevant_logical_keys:
+  - afoxolaner|reproductive_safety|dog|0
+- query: Is chronic tramadol use safe in a pregnant patient, or does it risk embryotoxicity
+    or opioid withdrawal in the offspring?
+  flow: reproductive_safety
+  drug: Tramadol
+  section: reproductive_safety
+  species:
+  - all
+  relevant_logical_keys:
+  - tramadol|reproductive_safety|all|0
+- query: Is lotilaner safe to use in a breeding, pregnant, or lactating dog or cat,
+    or should I avoid it given the lack of established safety data?
+  flow: reproductive_safety
+  drug: Lotilaner
+  section: reproductive_safety
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - lotilaner|reproductive_safety|cat+dog|0
+- query: Is medetomidine/vatinoxan safe to use for sedation in a pregnant bitch, or
+    could it induce uterine contractions or fetal bradycardia/hypoxia?
+  flow: reproductive_safety
+  drug: Medetomidine/Vatinoxan
+  section: reproductive_safety
+  species:
+  - dog
+  relevant_logical_keys:
+  - medetomidine/vatinoxan|reproductive_safety|dog|0
+  - medetomidine/vatinoxan|reproductive_safety|all|0
+- query: Is imidocarb safe to use in a near-term pregnant mare with babesiosis, or
+    should I avoid it given placental transfer risk?
+  flow: reproductive_safety
+  drug: Imidocarb
+  section: reproductive_safety
+  species:
+  - all
+  relevant_logical_keys:
+  - imidocarb|reproductive_safety|all|0
+- query: Is fluralaner safe to use in a breeding or pregnant dog, and are there any
+    known reproductive toxicity concerns based on the beagle safety studies?
+  flow: reproductive_safety
+  drug: Fluralaner
+  section: reproductive_safety
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - fluralaner|reproductive_safety|cat+dog|0
+  - fluralaner|reproductive_safety|cat+dog|1
+- query: Is there any published experience using Lente insulin to manage gestational
+    diabetes in a pregnant dog, or should I be cautious given limited safety data
+    in breeding/pregnant animals?
+  flow: reproductive_safety
+  drug: Insulin, Lente
+  section: reproductive_safety
+  species:
+  - dog
+  relevant_logical_keys:
+  - insulin, lente|reproductive_safety|dog|0
+- query: Is caffeine safe to use in a pregnant or nursing animal, given reports of
+    embryotoxicity and cleft palate in rodent studies?
+  flow: reproductive_safety
+  drug: Caffeine
+  section: reproductive_safety
+  species:
+  - all
+  relevant_logical_keys:
+  - caffeine|reproductive_safety|all|0
+- query: Has meloxicam's safety been established for use in pregnant, lactating, or
+    breeding dogs and cats, or should it be avoided in those patients?
+  flow: reproductive_safety
+  drug: Meloxicam
+  section: reproductive_safety
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - meloxicam|reproductive_safety|cat+dog|0
+- query: Is trilostane safe to use in a pregnant dog with Cushing's disease, or could
+    it cause pregnancy loss or fetal abnormalities?
+  flow: reproductive_safety
+  drug: Trilostane
+  section: reproductive_safety
+  species:
+  - dog
+  relevant_logical_keys:
+  - trilostane|reproductive_safety|dog|0
+- query: Is Cefadroxil safe to use in a pregnant dog, or should I weigh maternal benefit
+    against potential risk to the litter given the lack of established safety data
+    in veterinary patients?
+  flow: reproductive_safety
+  drug: Cefadroxil
+  section: reproductive_safety
+  species:
+  - all
+  relevant_logical_keys:
+  - cefadroxil|reproductive_safety|all|0
+- query: Is selamectin considered safe to use in a pregnant or lactating queen or
+    bitch, or should I weigh maternal benefit against risk to the offspring before
+    treating?
+  flow: reproductive_safety
+  drug: Selamectin
+  section: reproductive_safety
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - selamectin|reproductive_safety|cat+dog|0
+- query: Is cefpodoxime safe to use in this pregnant dog, given that it's not proven
+    teratogenic but hasn't been formally studied for safety in breeding, pregnant,
+    or lactating dogs?
+  flow: reproductive_safety
+  drug: Cefpodoxime
+  section: reproductive_safety
+  species:
+  - dog
+  relevant_logical_keys:
+  - cefpodoxime|reproductive_safety|dog|0
+- query: Is it safe to use iohexol for a myelogram in a nursing bitch, or should I
+    wait until her pups are weaned?
+  flow: reproductive_safety
+  drug: Iohexol
+  section: reproductive_safety
+  species:
+  - all
+  relevant_logical_keys:
+  - iohexol|reproductive_safety|all|0
+- query: Is propofol safe to use for induction in a pregnant bitch undergoing an emergency
+    C-section, and does giving repeat/extra induction doses affect neonatal Apgar
+    scores?
+  flow: reproductive_safety
+  drug: Propofol
+  section: reproductive_safety
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - propofol|reproductive_safety|cat+dog|0
+- query: Has tigilanol tiglate (Stelfonta) been evaluated for safety in pregnant or
+    lactating dogs, or those intended for breeding?
+  flow: reproductive_safety
+  drug: Tigilanol Tiglate
+  section: reproductive_safety
+  species:
+  - dog
+  relevant_logical_keys:
+  - tigilanol tiglate|reproductive_safety|dog|0
+- query: Is it safe to use feline interferon omega in a pregnant or nursing queen?
+  flow: reproductive_safety
+  drug: Interferon Omega, Feline Origin
+  section: reproductive_safety
+  species:
+  - all
+  relevant_logical_keys:
+  - interferon omega, feline origin|reproductive_safety|all|0
+- query: Is it safe to use cabergoline in a pregnant or nursing bitch/queen, or could
+    it induce abortion or affect nursing offspring through the milk?
+  flow: reproductive_safety
+  drug: Cabergoline
+  section: reproductive_safety
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - cabergoline|reproductive_safety|cat+dog|0
+- query: Is Hemoglobin Glutamer-200 (Bovine) safe to use in a pregnant or lactating
+    bitch, or should I reserve it only if the benefit to the dam outweighs potential
+    risk to the offspring?
+  flow: reproductive_safety
+  drug: Hemoglobin Glutamer- 200 (Bovine)
+  section: reproductive_safety
+  species:
+  - dog
+  relevant_logical_keys:
+  - hemoglobin glutamer- 200 (bovine)|reproductive_safety|dog|0
+- query: Is Mitotane safe to use in a pregnant or nursing dog, given concerns about
+    placental transfer and excretion in milk?
+  flow: reproductive_safety
+  drug: Mitotane
+  section: reproductive_safety
+  species:
+  - all
+  relevant_logical_keys:
+  - mitotane|reproductive_safety|all|0
+- query: Is it safe to use therapeutic doses of ergocalciferol in a pregnant or nursing
+    dog, or should I switch her puppies to milk replacer to avoid excess vitamin D
+    exposure through the milk?
+  flow: reproductive_safety
+  drug: Ergocalciferol
+  section: reproductive_safety
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - ergocalciferol|reproductive_safety|cat+dog|0
+- query: Is chloramphenicol safe to use in an intact male stud dog, or could it affect
+    his breeding soundness?
+  flow: reproductive_safety
+  drug: Chloramphenicol
+  section: reproductive_safety
+  species:
+  - dog
+  relevant_logical_keys:
+  - chloramphenicol|reproductive_safety|dog|0
+- query: Does insulin glargine interact with beta-blockers like propranolol, and could
+    that mask hypoglycemia signs in my diabetic patient?
+  flow: interaction
+  drug: Insulin, Glargine
+  section: drug_interactions
+  species:
+  - all
+  relevant_logical_keys:
+  - insulin, glargine|drug_interactions|all|0
+  - insulin, glargine|drug_interactions|all|1
+  - insulin, glargine|drug_interactions|all|2
+- query: Is it safe to use metyrapone in a cat that's currently on corticosteroids,
+    or will that blunt its effect?
+  flow: interaction
+  drug: Metyrapone
+  section: drug_interactions
+  species:
+  - cat
+  relevant_logical_keys:
+  - metyrapone|drug_interactions|cat|0
+- query: Is it safe to give clarithromycin to a dog that's also on warfarin, or could
+    it increase bleeding risk?
+  flow: interaction
+  drug: Clarithromycin
+  section: drug_interactions
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - clarithromycin|drug_interactions|cat+dog|0
+  - clarithromycin|drug_interactions|cat+dog|1
+  - clarithromycin|drug_interactions|cat+dog|2
+- query: Is it safe to give antibiotics, sedatives, or opioids alongside intratumoral
+    tigilanol tiglate in this dog, or should I be concerned about specific interactions
+    with those classes?
+  flow: interaction
+  drug: Tigilanol Tiglate
+  section: drug_interactions
+  species:
+  - dog
+  relevant_logical_keys:
+  - tigilanol tiglate|drug_interactions|dog|0
+- query: Is it safe to infiltrate the surgical site with liposomal bupivacaine if
+    I prepped the skin with chlorhexidine, or should I wait for it to dry first?
+  flow: interaction
+  drug: Bupivacaine Liposome
+  section: drug_interactions
+  species:
+  - all
+  relevant_logical_keys:
+  - bupivacaine liposome|drug_interactions|all|0
+  - bupivacaine liposome|drug_interactions|all|1
+- query: Is it safe to give ursodiol to a cat that's also on an aluminum-containing
+    antacid, or will that reduce its efficacy?
+  flow: interaction
+  drug: Ursodiol
+  section: drug_interactions
+  species:
+  - cat
+  relevant_logical_keys:
+  - ursodiol|drug_interactions|cat|0
+- query: Is it safe to start trazodone for situational anxiety in a dog that's also
+    on fluconazole for a fungal infection, or could that combination raise trazodone
+    levels too much?
+  flow: interaction
+  drug: Trazodone
+  section: drug_interactions
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - trazodone|drug_interactions|cat+dog|0
+  - trazodone|drug_interactions|cat+dog|1
+  - trazodone|drug_interactions|cat+dog|2
+- query: Does concurrent dexamethasone use shorten zonisamide's half-life in dogs
+    and require a dose adjustment?
+  flow: interaction
+  drug: Zonisamide
+  section: drug_interactions
+  species:
+  - dog
+  relevant_logical_keys:
+  - zonisamide|drug_interactions|dog|0
+  - zonisamide|drug_interactions|dog|1
+- query: Is there a risk of a clinically significant interaction if dextromethorphan
+    is used in a dog concurrently with a drug metabolized via CYP2D pathways, given
+    the known canine CYP2D15 polymorphism?
+  flow: interaction
+  drug: Dextromethorphan
+  section: drug_interactions
+  species:
+  - all
+  relevant_logical_keys:
+  - dextromethorphan|drug_interactions|all|0
+- query: Is it safe to start SAMe/silybin in a cat that's also on mirtazapine for
+    appetite stimulation, given the potential for additive serotonergic effects?
+  flow: interaction
+  drug: S- Adenosyl- Methionine (SAMe)/Silybin
+  section: drug_interactions
+  species:
+  - cat
+  relevant_logical_keys:
+  - s- adenosyl- methionine (same)/silybin|drug_interactions|cat|0
+  - s- adenosyl- methionine (same)/silybin|drug_interactions|cat|1
+- query: Is it safe to start ketoconazole in a dog currently on cyclosporine, or will
+    it raise cyclosporine levels enough to warrant a dose adjustment?
+  flow: interaction
+  drug: Cyclosporine (Systemic)
+  section: drug_interactions
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - cyclosporine (systemic)|drug_interactions|cat+dog|0
+  - cyclosporine (systemic)|drug_interactions|cat+dog|1
+  - cyclosporine (systemic)|drug_interactions|cat+dog|2
+  - cyclosporine (systemic)|drug_interactions|cat+dog|3
+  - cyclosporine (systemic)|drug_interactions|cat+dog|4
+- query: Since midazolam is metabolized by CYP3A12/CYP2B11 in dogs rather than CYP3A4
+    as in humans, how much weight should I give to human-derived midazolam drug interaction
+    data when using it in my canine patient?
+  flow: interaction
+  drug: Midazolam
+  section: drug_interactions
+  species:
+  - dog
+  relevant_logical_keys:
+  - midazolam|drug_interactions|dog|0
+  - midazolam|drug_interactions|dog|1
+  - midazolam|drug_interactions|dog|2
+- query: Is it safe to give methazolamide with aspirin in this patient, or does that
+    combo raise the risk of metabolic acidosis and methazolamide toxicity?
+  flow: interaction
+  drug: Methazolamide
+  section: drug_interactions
+  species:
+  - all
+  relevant_logical_keys:
+  - methazolamide|drug_interactions|all|0
+  - methazolamide|drug_interactions|all|1
+- query: Does concurrent chloramphenicol therapy blunt the hematologic response to
+    cobalamin supplementation in this cat?
+  flow: interaction
+  drug: Cobalamin
+  section: drug_interactions
+  species:
+  - cat
+  relevant_logical_keys:
+  - cobalamin|drug_interactions|cat|0
+- query: Is it safe to use theophylline with albuterol or other beta-agonist bronchodilators
+    in this dyspneic patient, or does the combination risk additive CNS/cardiac stimulation?
+  flow: interaction
+  drug: Theophylline
+  section: drug_interactions
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - theophylline|drug_interactions|cat+dog|0
+  - theophylline|drug_interactions|cat+dog|1
+  - theophylline|drug_interactions|cat+dog|2
+- query: Is it safe to start tolfenamic acid in a dog that's currently on a corticosteroid
+    taper, or should I avoid overlapping these due to GI ulceration risk?
+  flow: interaction
+  drug: Tolfenamic Acid
+  section: drug_interactions
+  species:
+  - dog
+  relevant_logical_keys:
+  - tolfenamic acid|drug_interactions|dog|0
+  - tolfenamic acid|drug_interactions|dog|1
+- query: Is it safe to give supplemental vitamin A to a patient currently on clopidogrel,
+    given the potential increased bleeding risk?
+  flow: interaction
+  drug: Vitamin A
+  section: drug_interactions
+  species:
+  - all
+  relevant_logical_keys:
+  - vitamin a|drug_interactions|all|0
+- query: Is it safe to use frunevetmab concurrently with an NSAID in a cat with osteoarthritis,
+    given that this combination hasn't been formally studied?
+  flow: interaction
+  drug: Frunevetmab
+  section: drug_interactions
+  species:
+  - cat
+  relevant_logical_keys:
+  - frunevetmab|drug_interactions|cat|0
+- query: Is it safe to give milbemycin oxime alongside this patient's benzodiazepine,
+    or should I anticipate potentiated GABA-related effects and adjust monitoring?
+  flow: interaction
+  drug: Milbemycin Oxime
+  section: drug_interactions
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - milbemycin oxime|drug_interactions|cat+dog|0
+- query: This dog is on metoclopramide for GI motility — does adding oxazepam increase
+    the risk of excessive CNS depression or sedation?
+  flow: interaction
+  drug: Oxazepam
+  section: drug_interactions
+  species:
+  - dog
+  relevant_logical_keys:
+  - oxazepam|drug_interactions|dog|0
+- query: Is it safe to give pimobendan together with furosemide, enalapril, and digoxin
+    in a dog on standard CHF triple therapy, or do I need extra monitoring for that
+    combination?
+  flow: interaction
+  drug: Pimobendan
+  section: drug_interactions
+  species:
+  - all
+  relevant_logical_keys:
+  - pimobendan|drug_interactions|all|0
+- query: In this hyperthyroid cat starting methimazole, could restoring euthyroidism
+    and lowering GFR increase exposure to concurrent anticoagulants like heparin or
+    rivaroxaban, and does that warrant closer monitoring?
+  flow: interaction
+  drug: Methimazole
+  section: drug_interactions
+  species:
+  - cat
+  relevant_logical_keys:
+  - methimazole|drug_interactions|cat|0
+  - methimazole|drug_interactions|cat|1
+  - methimazole|drug_interactions|cat|2
+- query: Is it safe to give maropitant concurrently with metronidazole and famotidine
+    in a vomiting dog, or are there known interactions with these commonly co-administered
+    drugs?
+  flow: interaction
+  drug: Maropitant
+  section: drug_interactions
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - maropitant|drug_interactions|cat+dog|0
+  - maropitant|drug_interactions|cat+dog|1
+  - maropitant|drug_interactions|cat+dog|2
+- query: Is it safe to give clopidogrel alongside aspirin or an azole antifungal like
+    ketoconazole in a dog, or does this combination increase bleeding risk enough
+    to warrant closer monitoring?
+  flow: interaction
+  drug: Clopidogrel
+  section: drug_interactions
+  species:
+  - dog
+  relevant_logical_keys:
+  - clopidogrel|drug_interactions|dog|0
+  - clopidogrel|drug_interactions|dog|1
+  - clopidogrel|drug_interactions|dog|2
+- query: Can tildipirosin be co-administered with a lincosamide like clindamycin,
+    or does the label warn against combining it with other macrolide-class antimicrobials?
+  flow: interaction
+  drug: Tildipirosin
+  section: drug_interactions
+  species:
+  - all
+  relevant_logical_keys:
+  - tildipirosin|drug_interactions|all|0
+- query: Is high-dose ascorbic acid likely to increase this patient's risk of urate
+    or oxalate urolith formation, given a history of urinary stones?
+  flow: adverse_effects
+  drug: Ascorbic Acid
+  section: adverse_effects
+  species:
+  - all
+  relevant_logical_keys:
+  - ascorbic acid|adverse_effects|all|0
+- query: Aside from ocular stinging, could topical dorzolamide cause any systemic
+    effects like renal tubular acidosis or hypokalemia in this cat with long-term
+    use?
+  flow: adverse_effects
+  drug: Dorzolamide Ophthalmic
+  section: adverse_effects
+  species:
+  - cat
+  relevant_logical_keys:
+  - dorzolamide ophthalmic|adverse_effects|cat|0
+- query: What are the signs of chronic hypervitaminosis A I should watch for in a
+    dog on long-term oral vitamin A supplementation, and does the same toxicity risk
+    apply to cats?
+  flow: adverse_effects
+  drug: Vitamin A
+  section: adverse_effects
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - vitamin a|adverse_effects|cat+dog|0
+- query: What’s the realistic adverse effect profile I should monitor for in this
+    dog getting IVIG—specifically risk of hypertension, anaphylaxis or hypersensitivity
+    reactions, injection site reactions, volume overload, and thrombotic events?
+  flow: adverse_effects
+  drug: Immune Globulin (Human), Intravenous
+  section: adverse_effects
+  species:
+  - dog
+  relevant_logical_keys:
+  - immune globulin (human), intravenous|adverse_effects|dog|0
+  - immune globulin (human), intravenous|adverse_effects|dog|1
+- query: Is naltrexone likely to cause any significant adverse effects in a non-opioid-dependent
+    dog, or should I mainly just watch liver values with prolonged use?
+  flow: adverse_effects
+  drug: Naltrexone
+  section: adverse_effects
+  species:
+  - all
+  relevant_logical_keys:
+  - naltrexone|adverse_effects|all|0
+- query: Is there a real risk of Heinz-body hemolytic anemia at recommended doses
+    in this cat, and should I be monitoring a CBC if she's also on an acidifying diet?
+  flow: adverse_effects
+  drug: Methionine
+  section: adverse_effects
+  species:
+  - cat
+  relevant_logical_keys:
+  - methionine|adverse_effects|cat|0
+- query: Compared to atropine, is glycopyrrolate any less likely to cause GI or urinary
+    effects like xerostomia, constipation, or urinary retention at typical premed
+    doses in dogs and cats?
+  flow: adverse_effects
+  drug: Glycopyrrolate
+  section: adverse_effects
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - glycopyrrolate|adverse_effects|cat+dog|0
+  - glycopyrrolate|adverse_effects|cat+dog|1
+- query: Aside from local burning/stinging, should I be concerned about corneal stromal
+    ulceration or bullous keratopathy in this dog if there's any underlying corneal
+    epithelial defect at the application site?
+  flow: adverse_effects
+  drug: Mitomycin Ophthalmic
+  section: adverse_effects
+  species:
+  - dog
+  relevant_logical_keys:
+  - mitomycin ophthalmic|adverse_effects|all|0
+  - mitomycin ophthalmic|adverse_effects|all|1
+  - mitomycin ophthalmic|adverse_effects|all|2
+  - mitomycin ophthalmic|adverse_effects|all|3
+  - mitomycin ophthalmic|adverse_effects|all|4
+  - mitomycin ophthalmic|adverse_effects|all|5
+  - mitomycin ophthalmic|adverse_effects|all|6
+  - mitomycin ophthalmic|adverse_effects|dog|0
+  - mitomycin ophthalmic|adverse_effects|all|7
+  - mitomycin ophthalmic|adverse_effects|cat+dog|0
+  - mitomycin ophthalmic|adverse_effects|dog|1
+  - mitomycin ophthalmic|adverse_effects|all|8
+  - mitomycin ophthalmic|adverse_effects|all|9
+  - mitomycin ophthalmic|adverse_effects|all|10
+  - mitomycin ophthalmic|adverse_effects|all|11
+  - mitomycin ophthalmic|adverse_effects|all|12
+  - mitomycin ophthalmic|adverse_effects|all|13
+  - mitomycin ophthalmic|adverse_effects|dog|2
+  - mitomycin ophthalmic|adverse_effects|all|14
+  - mitomycin ophthalmic|adverse_effects|all|15
+  - mitomycin ophthalmic|adverse_effects|cat+dog+horse|0
+  - mitomycin ophthalmic|adverse_effects|all|16
+  - mitomycin ophthalmic|adverse_effects|all|17
+  - mitomycin ophthalmic|adverse_effects|cat+dog+horse|1
+  - mitomycin ophthalmic|adverse_effects|all|18
+  - mitomycin ophthalmic|adverse_effects|cat+dog+horse|2
+  - mitomycin ophthalmic|adverse_effects|cat+dog+horse|3
+  - mitomycin ophthalmic|adverse_effects|all|19
+  - mitomycin ophthalmic|adverse_effects|dog|3
+- query: Is nebulized ipratropium likely to trigger any significant adverse effects
+    like coughing or anticholinergic signs in this patient?
+  flow: adverse_effects
+  drug: Ipratropium
+  section: adverse_effects
+  species:
+  - all
+  relevant_logical_keys:
+  - ipratropium|adverse_effects|all|0
+- query: For a timid cat starting buspirone for inter-cat aggression anxiety, what
+    adverse effects should I mention to the owner—should they expect GI upset, bradycardia,
+    or behavioral changes like excessive grooming or increased assertiveness/affection?
+  flow: adverse_effects
+  drug: Buspirone
+  section: adverse_effects
+  species:
+  - cat
+  relevant_logical_keys:
+  - buspirone|adverse_effects|cat|0
+- query: In post-op cats and dogs, what are the most commonly reported adverse effects
+    with liposomal bupivacaine at the incision site, and should I be worried about
+    vomiting or renal/liver changes based on the field study data?
+  flow: adverse_effects
+  drug: Bupivacaine Liposome
+  section: adverse_effects
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - bupivacaine liposome|adverse_effects|cat+dog|0
+- query: What adverse effects should I be watching for in this dog after a 15-minute
+    IV zoledronate infusion—particularly renal values, calcium levels, and any signs
+    of jaw osteonecrosis?
+  flow: adverse_effects
+  drug: Zoledronate
+  section: adverse_effects
+  species:
+  - dog
+  relevant_logical_keys:
+  - zoledronate|adverse_effects|dog|0
+- query: What’s the reported incidence of lethargy, anorexia, and other adverse effects
+    seen in the field safety trials for this topical flea product?
+  flow: adverse_effects
+  drug: Selamectin/Sarolaner
+  section: adverse_effects
+  species:
+  - all
+  relevant_logical_keys:
+  - selamectin/sarolaner|adverse_effects|all|0
+- query: For a cat with acetaminophen toxicosis on oral acetylcysteine, what adverse
+    effects should I watch for—mainly GI upset, or is urticaria a concern too?
+  flow: adverse_effects
+  drug: Acetylcysteine
+  section: adverse_effects
+  species:
+  - cat
+  relevant_logical_keys:
+  - acetylcysteine|adverse_effects|cat|0
+- query: What adverse effects should I be watching for in a dog on Imidapril—particularly
+    regarding GI signs or hypotension-related symptoms like lethargy or inappetence?
+  flow: adverse_effects
+  drug: Imidapril
+  section: adverse_effects
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - imidapril|adverse_effects|cat+dog|0
+  - imidapril|adverse_effects|cat+dog|1
+- query: What’s the expected incidence of neutropenia and thrombocytopenia in dogs
+    receiving cytarabine as an IV CRI, and is myelosuppression less severe if I switch
+    to SC dosing instead?
+  flow: adverse_effects
+  drug: Cytarabine
+  section: adverse_effects
+  species:
+  - dog
+  relevant_logical_keys:
+  - cytarabine|adverse_effects|dog|0
+  - cytarabine|adverse_effects|dog|1
+- query: Is prochlorperazine likely to cause sedation or hypotension in this dog,
+    and should I watch for muscle tremors or fasciculations as well?
+  flow: adverse_effects
+  drug: Prochlorperazine
+  section: adverse_effects
+  species:
+  - all
+  relevant_logical_keys:
+  - prochlorperazine|adverse_effects|all|0
+- query: Besides sedation and GI upset, can codeine cause CNS excitation like hyperexcitability
+    or seizures in this cat?
+  flow: adverse_effects
+  drug: Codeine
+  section: adverse_effects
+  species:
+  - cat
+  relevant_logical_keys:
+  - codeine|adverse_effects|cat|0
+- query: What's the expected timeline for myelosuppression with chlorambucil—when
+    should I schedule CBC rechecks to catch a nadir, and how worried should I be about
+    progressing to pancytopenia if this cat stays on long-term therapy?
+  flow: adverse_effects
+  drug: Chlorambucil
+  section: adverse_effects
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - chlorambucil|adverse_effects|cat+dog|0
+  - chlorambucil|adverse_effects|cat+dog|1
+- query: What are the most common adverse effects I should watch for in a dog starting
+    selegiline, and how should I manage it if GI upset like vomiting or diarrhea occurs?
+  flow: adverse_effects
+  drug: Selegiline
+  section: adverse_effects
+  species:
+  - dog
+  relevant_logical_keys:
+  - selegiline|adverse_effects|dog|0
+- query: Is bimatoprost ophthalmic likely to cause iris darkening or increased eyelash
+    growth with chronic use, and should I warn the owner about local stinging/irritation
+    on instillation?
+  flow: adverse_effects
+  drug: Bimatoprost Ophthalmic
+  section: adverse_effects
+  species:
+  - all
+  relevant_logical_keys:
+  - bimatoprost ophthalmic|adverse_effects|all|0
+- query: Is there any documented adverse effect profile for montelukast in cats specifically,
+    or am I extrapolating from human data for this asthmatic cat?
+  flow: adverse_effects
+  drug: Montelukast
+  section: adverse_effects
+  species:
+  - cat
+  relevant_logical_keys:
+  - montelukast|adverse_effects|cat|0
+- query: What adverse effects should I watch for with spironolactone in this cat versus
+    a dog on the same drug—specifically, is hyperkalemia and the electrolyte/creatinine
+    shift something I need to monitor for in cats but not really expect in dogs?
+  flow: adverse_effects
+  drug: Spironolactone
+  section: adverse_effects
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - spironolactone|adverse_effects|cat+dog|0
+  - spironolactone|adverse_effects|cat+dog|1
+- query: What’s the seizure risk with intrathecal iohexol for a myelogram in a large-breed
+    dog, and does injection volume or site (cisternal vs. lumbar) make a difference?
+  flow: adverse_effects
+  drug: Iohexol
+  section: adverse_effects
+  species:
+  - dog
+  relevant_logical_keys:
+  - iohexol|adverse_effects|dog|0
+- query: Is there a risk of increased intraocular pressure or cataract formation with
+    long-term use of ophthalmic loteprednol, and how does that compare to other topical
+    corticosteroids?
+  flow: adverse_effects
+  drug: Loteprednol Ophthalmic
+  section: adverse_effects
+  species:
+  - all
+  relevant_logical_keys:
+  - loteprednol ophthalmic|adverse_effects|all|0
+- query: What renal parameters and how frequently should I be checking them in a dog
+    on systemic polymyxin B for endotoxemia, and what specific findings would prompt
+    me to stop the drug?
+  flow: monitoring
+  drug: Polymyxin B, Systemic
+  section: monitoring
+  species:
+  - all
+  relevant_logical_keys:
+  - polymyxin b, systemic|monitoring|all|0
+- query: For this CKD cat starting on oral calcium as a phosphate binder, how often
+    should I be rechecking serum phosphorus and calcium initially, and how does that
+    interval change once she's stable?
+  flow: monitoring
+  drug: Calcium, Oral (-Carbonate, -Gluconate, -Lactate)
+  section: monitoring
+  species:
+  - cat
+  relevant_logical_keys:
+  - calcium, oral (-carbonate, -gluconate, -lactate)|monitoring|cat|0
+- query: For a cat on hydroxyurea for polycythemia vera, how often should I be rechecking
+    CBC/platelets and renal values once she's stabilized, and should I be monitoring
+    her more frequently than I would a dog on this drug?
+  flow: monitoring
+  drug: Hydroxyurea
+  section: monitoring
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - hydroxyurea|monitoring|cat+dog|0
+- query: For a dog on chronic phenylbutazone therapy, what's the recommended frequency
+    for repeat CBCs, and should I also be tracking a renal panel with albumin/total
+    protein over time?
+  flow: monitoring
+  drug: Phenylbutazone
+  section: monitoring
+  species:
+  - dog
+  relevant_logical_keys:
+  - phenylbutazone|monitoring|dog|0
+- query: What clinical signs should I be monitoring in this cat to gauge treatment
+    response to idoxuridine for herpetic keratitis, and how do I know it's working?
+  flow: monitoring
+  drug: Idoxuridine Ophthalmic
+  section: monitoring
+  species:
+  - all
+  relevant_logical_keys:
+  - idoxuridine ophthalmic|monitoring|all|0
+- query: In a diabetic cat started on metyrapone for hyperadrenocorticism, how closely
+    should I be monitoring blood glucose and adjusting insulin dosing?
+  flow: monitoring
+  drug: Metyrapone
+  section: monitoring
+  species:
+  - cat
+  relevant_logical_keys:
+  - metyrapone|monitoring|cat|0
+- query: For a DKA patient being started on regular crystalline insulin, what parameters
+    should I be tracking during the initial regulation phase, and what's the overarching
+    goal I'm titrating toward?
+  flow: monitoring
+  drug: Insulin, Regular (Crystalline Zinc)
+  section: monitoring
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - insulin, regular (crystalline zinc)|monitoring|cat+dog|0
+  - insulin, regular (crystalline zinc)|monitoring|cat+dog|1
+  - insulin, regular (crystalline zinc)|monitoring|cat+dog|2
+- query: In a proteinuric dog just started on losartan, what specific labs and how
+    soon after initiation or dose changes should I recheck to confirm the therapy
+    is working?
+  flow: monitoring
+  drug: Losartan
+  section: monitoring
+  species:
+  - dog
+  relevant_logical_keys:
+  - losartan|monitoring|dog|0
+- query: What parameters should I be tracking intraoperatively while this patient
+    is on an alfentanil CRI for anesthesia—beyond just heart rate and blood pressure?
+  flow: monitoring
+  drug: Alfentanil
+  section: monitoring
+  species:
+  - all
+  relevant_logical_keys:
+  - alfentanil|monitoring|all|0
+- query: In a cat started on clorazepate for behavior modification, what's the recommended
+    schedule for baseline and follow-up liver enzyme monitoring?
+  flow: monitoring
+  drug: Clorazepate
+  section: monitoring
+  species:
+  - cat
+  relevant_logical_keys:
+  - clorazepate|monitoring|cat|0
+- query: What’s the recommended timing and frequency for a blood glucose curve (or
+    other monitoring parameters) when starting or adjusting PZI dosing in a newly
+    diagnosed diabetic cat versus dog, and how do I use those results to decide on
+    dose changes?
+  flow: monitoring
+  drug: Insulin, Protamine Zinc
+  section: monitoring
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - insulin, protamine zinc|monitoring|cat+dog|0
+  - insulin, protamine zinc|monitoring|cat+dog|1
+  - insulin, protamine zinc|monitoring|cat+dog|2
+- query: For a dog on lomustine, when should I recheck CBC with platelets relative
+    to dosing, and at what platelet count should I hold the next dose?
+  flow: monitoring
+  drug: Lomustine
+  section: monitoring
+  species:
+  - dog
+  relevant_logical_keys:
+  - lomustine|monitoring|dog|0
+- query: How should I monitor response to therapy on ophthalmic amphotericin B for
+    a fungal keratitis case—should I be doing repeat corneal scrapings, and how often,
+    to confirm clearance versus just tracking clinical signs?
+  flow: monitoring
+  drug: Amphotericin B Ophthalmic
+  section: monitoring
+  species:
+  - all
+  relevant_logical_keys:
+  - amphotericin b ophthalmic|monitoring|all|0
+- query: What should I monitor post-op to confirm this cat's glaucoma implant is staying
+    patent and functioning after adjunctive mitomycin C application—serial IOP checks,
+    and what interval would you recommend?
+  flow: monitoring
+  drug: Mitomycin Ophthalmic
+  section: monitoring
+  species:
+  - cat
+  relevant_logical_keys:
+  - mitomycin ophthalmic|monitoring|all|0
+  - mitomycin ophthalmic|monitoring|all|1
+  - mitomycin ophthalmic|monitoring|all|2
+  - mitomycin ophthalmic|monitoring|all|3
+  - mitomycin ophthalmic|monitoring|all|4
+  - mitomycin ophthalmic|monitoring|all|5
+  - mitomycin ophthalmic|monitoring|all|6
+  - mitomycin ophthalmic|monitoring|all|7
+  - mitomycin ophthalmic|monitoring|all|8
+  - mitomycin ophthalmic|monitoring|all|9
+  - mitomycin ophthalmic|monitoring|all|10
+  - mitomycin ophthalmic|monitoring|all|11
+  - mitomycin ophthalmic|monitoring|all|12
+  - mitomycin ophthalmic|monitoring|all|13
+  - mitomycin ophthalmic|monitoring|all|14
+  - mitomycin ophthalmic|monitoring|cat|0
+  - mitomycin ophthalmic|monitoring|all|15
+  - mitomycin ophthalmic|monitoring|all|16
+  - mitomycin ophthalmic|monitoring|all|17
+  - mitomycin ophthalmic|monitoring|all|18
+  - mitomycin ophthalmic|monitoring|all|19
+  - mitomycin ophthalmic|monitoring|all|20
+  - mitomycin ophthalmic|monitoring|all|21
+  - mitomycin ophthalmic|monitoring|cat|1
+  - mitomycin ophthalmic|monitoring|all|22
+  - mitomycin ophthalmic|monitoring|all|23
+  - mitomycin ophthalmic|monitoring|all|24
+  - mitomycin ophthalmic|monitoring|all|25
+  - mitomycin ophthalmic|monitoring|all|26
+  - mitomycin ophthalmic|monitoring|all|27
+  - mitomycin ophthalmic|monitoring|all|28
+  - mitomycin ophthalmic|monitoring|all|29
+  - mitomycin ophthalmic|monitoring|cat+dog|0
+  - mitomycin ophthalmic|monitoring|cat+dog|1
+  - mitomycin ophthalmic|monitoring|cat+dog|2
+  - mitomycin ophthalmic|monitoring|cat+dog|3
+  - mitomycin ophthalmic|monitoring|all|30
+- query: What monitoring approach and frequency do you recommend when starting a newly
+    diagnosed diabetic dog or cat on Lente insulin—should I be tracking clinical signs
+    like PU/PD alongside serial blood glucose curves, and how often should reassessment
+    occur before making dose adjustments?
+  flow: monitoring
+  drug: Insulin, Lente
+  section: monitoring
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - insulin, lente|monitoring|cat+dog|0
+  - insulin, lente|monitoring|cat+dog|1
+  - insulin, lente|monitoring|cat+dog|2
+- query: For a dog starting azathioprine, what's the recommended CBC/chemistry monitoring
+    schedule, and at what WBC or neutrophil count should I reduce the dose or discontinue
+    therapy?
+  flow: monitoring
+  drug: Azathioprine
+  section: monitoring
+  species:
+  - dog
+  relevant_logical_keys:
+  - azathioprine|monitoring|dog|0
+- query: What's the best way to monitor depth of neuromuscular blockade in this patient
+    on atracurium during anesthesia—can I just watch for return of jaw tone/palpebral,
+    or do I need train-of-four/acceleromyography to avoid overdosing?
+  flow: monitoring
+  drug: Atracurium
+  section: monitoring
+  species:
+  - all
+  relevant_logical_keys:
+  - atracurium|monitoring|all|0
+- query: For a cat on long-term robenacoxib, what's the recommended schedule for rechecking
+    liver enzymes, and at what point should I discontinue therapy based on those values
+    or accompanying clinical signs like anorexia or lethargy?
+  flow: monitoring
+  drug: Robenacoxib
+  section: monitoring
+  species:
+  - cat
+  relevant_logical_keys:
+  - robenacoxib|monitoring|cat|0
+- query: For a dog starting long-term rifampin therapy, what's the recommended schedule
+    for baseline and follow-up liver enzyme monitoring, and what clinical signs of
+    hepatopathy should I be watching for at home?
+  flow: monitoring
+  drug: Rifampin
+  section: monitoring
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - rifampin|monitoring|cat+dog|0
+- query: If I anticipate keeping this dog on sulfadimethoxine/ormetoprim for more
+    than a week, what baseline and follow-up monitoring should I schedule — including
+    Schirmer tear tests, CBC/hepatic profile, and thyroid function?
+  flow: monitoring
+  drug: Sulfadimethoxine/Ormetoprim
+  section: monitoring
+  species:
+  - dog
+  relevant_logical_keys:
+  - sulfadimethoxine/ormetoprim|monitoring|dog|0
+- query: In a dog on folic acid supplementation, what specific labs should I check
+    at baseline and then recheck during and after treatment to confirm it's working?
+  flow: monitoring
+  drug: Folic Acid
+  section: monitoring
+  species:
+  - all
+  relevant_logical_keys:
+  - folic acid|monitoring|all|0
+- query: For a cat on ganciclovir ophthalmic for herpes keratitis, how often should
+    I be running baseline and follow-up CBC/chemistry panels to catch myelosuppression
+    or nephrotoxicity?
+  flow: monitoring
+  drug: Ganciclovir Ophthalmic
+  section: monitoring
+  species:
+  - cat
+  relevant_logical_keys:
+  - ganciclovir ophthalmic|monitoring|cat|0
+- query: For a dog on cyclosporine for chronic enteropathy, do I actually need to
+    trough blood levels, or should I just be tracking clinical response and adverse
+    effects since levels don't correlate well with efficacy in IBD?
+  flow: monitoring
+  drug: Cyclosporine (Systemic)
+  section: monitoring
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - cyclosporine (systemic)|monitoring|cat+dog|0
+  - cyclosporine (systemic)|monitoring|cat+dog|1
+  - cyclosporine (systemic)|monitoring|cat+dog|2
+- query: For a dog starting long-term meloxicam therapy, what's the recommended schedule
+    for baseline and follow-up renal/hepatic panels, and when would bile acids testing
+    be warranted?
+  flow: monitoring
+  drug: Meloxicam
+  section: monitoring
+  species:
+  - dog
+  relevant_logical_keys:
+  - meloxicam|monitoring|dog|0
+- query: With prolonged oral neomycin use in a dog, what systemic and GI adverse effects
+    should I be monitoring for, and are there signs that would indicate the drug is
+    losing clinical efficacy?
+  flow: monitoring
+  drug: Neomycin
+  section: monitoring
+  species:
+  - all
+  relevant_logical_keys:
+  - neomycin|monitoring|all|0
+- query: What withdrawal times and precautions should I tell the client to follow
+    before administering morantel, and when should they call before use?
+  flow: administration
+  drug: Morantel
+  section: client_information
+  species:
+  - all
+  relevant_logical_keys:
+  - morantel|client_information|all|0
+- query: What should I tell the owner if their cat vomits after getting cefadroxil
+    on an empty stomach?
+  flow: administration
+  drug: Cefadroxil
+  section: client_information
+  species:
+  - cat
+  relevant_logical_keys:
+  - cefadroxil|client_information|cat|0
+- query: What should I tell the owner about giving gemfibrozil relative to meal times,
+    and does this dog also need to stay on the prescribed diet for it to be effective?
+  flow: administration
+  drug: Gemfibrozil
+  section: client_information
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - gemfibrozil|client_information|cat+dog|0
+- query: What client instructions should I give regarding the timing of dosing relative
+    to meals for this dog on spironolactone/benazepril?
+  flow: administration
+  drug: Spironolactone/Benazepril
+  section: client_information
+  species:
+  - dog
+  relevant_logical_keys:
+  - spironolactone/benazepril|client_information|dog|0
+- query: What should I tell the owner to watch for at home—rash or fever—that would
+    warrant calling the clinic right away while their dog is on benazepril?
+  flow: administration
+  drug: Benazepril
+  section: client_information
+  species:
+  - all
+  relevant_logical_keys:
+  - benazepril|client_information|all|0
+- query: What should I tell the owner if their cat starts drooling excessively after
+    I administer atropine ophthalmic—is that an expected reaction they should just
+    monitor at home?
+  flow: administration
+  drug: Atropine Ophthalmic
+  section: client_information
+  species:
+  - cat
+  relevant_logical_keys:
+  - atropine ophthalmic|client_information|cat|0
+- query: What should I tell the client about the monthly dosing schedule for milbemycin
+    oxime — specifically why giving it late or missing a dose matters for heartworm
+    prevention efficacy?
+  flow: administration
+  drug: Milbemycin Oxime
+  section: client_information
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - milbemycin oxime|client_information|cat+dog|0
+- query: What client precautions should I go over for handling this dog's urine, feces,
+    and food/water dishes on treatment day and for the 3 days following, and what
+    type of gloves should the owner use?
+  flow: administration
+  drug: Verdinexor
+  section: client_information
+  species:
+  - dog
+  relevant_logical_keys:
+  - verdinexor|client_information|dog|0
+  - verdinexor|client_information|dog|1
+  - verdinexor|client_information|dog|2
+- query: What's the minimum wait time I should tell the client to leave between this
+    bromfenac dose and any other ophthalmic medication applied to the same eye?
+  flow: administration
+  drug: Bromfenac Ophthalmic
+  section: client_information
+  species:
+  - all
+  relevant_logical_keys:
+  - bromfenac ophthalmic|client_information|all|0
+- query: What should I tell the owner of this diabetic cat about home blood glucose
+    monitoring needs while she's on metyrapone, and is it safe to stop the drug abruptly
+    if she has side effects?
+  flow: administration
+  drug: Metyrapone
+  section: client_information
+  species:
+  - cat
+  relevant_logical_keys:
+  - metyrapone|client_information|cat|0
+- query: What should I tell the owner to watch for at home in terms of side effects—especially
+    injection site hair loss, appetite/weight changes, or behavior changes—so they
+    know when to call us?
+  flow: administration
+  drug: Medroxyprogesterone
+  section: client_information
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - medroxyprogesterone|client_information|cat+dog|0
+- query: What should I tell the client to watch for and report if their dog develops
+    side effects like a wobbly gait, increased appetite/thirst, or behavior changes
+    after starting imepitoin?
+  flow: administration
+  drug: Imepitoin
+  section: client_information
+  species:
+  - dog
+  relevant_logical_keys:
+  - imepitoin|client_information|dog|0
+- query: What should I tell the client about spacing ciprofloxacin away from calcium-containing
+    supplements or other mineral-fortified treats to avoid reduced absorption?
+  flow: administration
+  drug: Ciprofloxacin
+  section: client_information
+  species:
+  - all
+  relevant_logical_keys:
+  - ciprofloxacin|client_information|all|0
+- query: What client instructions should I give for priming and using the aerosol
+    inhaler with a spacer/mask before the first dose in this cat, and how should the
+    canister be stored to avoid heat exposure?
+  flow: administration
+  drug: Albuterol
+  section: client_information
+  species:
+  - cat
+  relevant_logical_keys:
+  - albuterol|client_information|cat|0
+  - albuterol|client_information|cat|1
+- query: What should I tell the owner about the likelihood of side effects like drooling,
+    vomiting, or diarrhea, given how limited our clinical experience with this drug
+    is in dogs and cats?
+  flow: administration
+  drug: Nitazoxanide
+  section: client_information
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - nitazoxanide|client_information|cat+dog|0
+- query: What signs should I tell the owner to monitor at home that would warrant
+    stopping carprofen and calling the clinic?
+  flow: administration
+  drug: Carprofen
+  section: client_information
+  species:
+  - dog
+  relevant_logical_keys:
+  - carprofen|client_information|dog|0
+- query: What should I tell the client about the smell of this medication so they
+    don't think it's spoiled and stop using it?
+  flow: administration
+  drug: Acetylcysteine Ophthalmic
+  section: client_information
+  species:
+  - all
+  relevant_logical_keys:
+  - acetylcysteine ophthalmic|client_information|all|0
+- query: What should I tell the owner of a cat on piroxicam to watch for at home,
+    given the increased risk of GI ulceration and kidney problems in this species?
+  flow: administration
+  drug: Piroxicam
+  section: client_information
+  species:
+  - cat
+  relevant_logical_keys:
+  - piroxicam|client_information|cat|0
+- query: What should I tell the owner about the timing of administration relative
+    to feeding when using capromorelin in cats, and how does this differ from the
+    dog product's instructions?
+  flow: administration
+  drug: Capromorelin
+  section: client_information
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - capromorelin|client_information|cat+dog|0
+- query: What signs should I tell the owner to watch for at home after giving levamisole
+    to their dog, and should I advise giving it with food?
+  flow: administration
+  drug: Levamisole
+  section: client_information
+  species:
+  - dog
+  relevant_logical_keys:
+  - levamisole|client_information|dog|0
+- query: What's the recommended waiting interval between applying this miconazole
+    ophthalmic and any other ophthalmic medication I send home for this patient?
+  flow: administration
+  drug: Miconazole Ophthalmic
+  section: client_information
+  species:
+  - all
+  relevant_logical_keys:
+  - miconazole ophthalmic|client_information|all|0
+- query: What signs of anemia or lethargy should I tell this cat's owner to watch
+    for at home, and how urgently do they need to call if they notice them?
+  flow: administration
+  drug: Zidovudine
+  section: client_information
+  species:
+  - cat
+  relevant_logical_keys:
+  - zidovudine|client_information|cat|0
+- query: What's the treatment window I should communicate to the owner for a cat versus
+    a dog with suspected ethylene glycol ingestion, so they understand how urgently
+    to decide on fomepizole therapy?
+  flow: administration
+  drug: Fomepizole
+  section: client_information
+  species:
+  - cat
+  - dog
+  relevant_logical_keys:
+  - fomepizole|client_information|cat+dog|0
+- query: What precautions should I give the client for handling this dog's waste,
+    and how long after each doxorubicin infusion does that precaution period last?
+  flow: administration
+  drug: Doxorubicin
+  section: client_information
+  species:
+  - dog
+  relevant_logical_keys:
+  - doxorubicin|client_information|dog|0
+  - doxorubicin|client_information|dog|1
+- query: What should I tell the owner about how long it may take before they notice
+    improvement with this injection?
+  flow: administration
+  drug: Polysulfated Glycosaminoglycan
+  section: client_information
+  species:
+  - all
+  relevant_logical_keys:
+  - polysulfated glycosaminoglycan|client_information|all|0
