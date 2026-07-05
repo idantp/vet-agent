@@ -35,8 +35,23 @@ def test_ingest_reports_clean_error_for_non_pdf_file(tmp_path):
 def test_help_lists_phase2_commands():
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    for cmd in ("benchmark", "load", "retrieve"):
+    for cmd in ("embed", "benchmark", "load", "retrieve"):
         assert cmd in result.stdout
+
+
+def test_embed_requires_existing_chunks(tmp_path):
+    missing = tmp_path / "nope.json"
+    result = runner.invoke(app, ["embed", "--chunks", str(missing)])
+    assert result.exit_code != 0
+    assert "not found" in result.stdout.lower()
+
+
+def test_embed_rejects_unknown_model(tmp_path):
+    chunks = tmp_path / "chunks.json"
+    chunks.write_text("[]", encoding="utf-8")
+    result = runner.invoke(app, ["embed", "--models", "nope", "--chunks", str(chunks)])
+    assert result.exit_code != 0
+    assert "unknown model" in result.stdout.lower()
 
 
 def test_load_requires_existing_chunks(tmp_path):

@@ -5,7 +5,7 @@ import typer
 from qdrant_client import QdrantClient
 
 from vet_agent.config import Settings
-from vet_agent.eval.benchmark import ModelScore, benchmark_model, write_scorecard
+from vet_agent.eval.benchmark import ModelScore, benchmark_model, embed_corpus, write_scorecard
 from vet_agent.eval.eval_set import load_eval_set
 from vet_agent.ingestion.models import SectionType
 from vet_agent.ingestion.pdf_reader import extract_pages
@@ -91,6 +91,31 @@ def ingest(
 
 
 @app.command()
+def embed(
+    models: str = typer.Option("medembed-base", help="Comma-separated model keys"),  # noqa: B008
+    chunks: Path = typer.Option(Path("data/ingest/chunks.json")),  # noqa: B008
+    cache_dir: Path = typer.Option(Path("data/embeddings")),  # noqa: B008
+) -> None:
+    """Embed the corpus for one or more models and cache the vectors (the slow step).
+
+    Run this per model to spread the load (e.g. one at a time, letting the machine cool
+    between); `benchmark` then reuses the cache and runs fast.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(message)s", force=True)
+    if not chunks.is_file():
+        typer.echo(f"Error: chunks file not found at {chunks}")
+        raise typer.Exit(code=1)
+    parsed = read_chunks(chunks)
+    for key in [m.strip() for m in models.split(",")]:
+        if key not in MODEL_REGISTRY:
+            typer.echo(f"Error: unknown model '{key}'. Known: {sorted(MODEL_REGISTRY)}")
+            raise typer.Exit(code=1)
+        typer.echo(f"Embedding corpus with {key} ...")
+        embed_corpus(get_embedder(key), parsed, cache_dir)
+    typer.echo("Done embedding. Run 'vet-agent benchmark' to score (reuses the cache).")
+
+
+@app.command()
 def benchmark(
     chunks: Path = typer.Option(Path("data/ingest/chunks.json")),  # noqa: B008
     eval_set: Path = typer.Option(Path("data/eval/retrieval_eval.yaml")),  # noqa: B008
@@ -99,7 +124,11 @@ def benchmark(
     cache_dir: Path = typer.Option(Path("data/embeddings")),  # noqa: B008
     out_dir: Path = typer.Option(Path("data/eval")),  # noqa: B008
 ) -> None:
-    """Benchmark candidate embedders in-memory and write a scorecard."""
+    """Benchmark candidate embedders in-memory and write a scorecard.
+
+    Reuses vectors cached by a prior `embed`/`benchmark`; embeds (slow) only on a miss.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(message)s", force=True)
     if not chunks.is_file():
         typer.echo(f"Error: chunks file not found at {chunks}")
         raise typer.Exit(code=1)

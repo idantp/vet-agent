@@ -47,7 +47,11 @@ class SentenceTransformerEmbedder:
         self._model = SentenceTransformer(spec.hf_id)
 
     def _encode(self, texts: list[str]) -> list[list[float]]:
-        raw = self._model.encode(texts, normalize_embeddings=False)
+        # Show a live progress bar for large batches (the corpus embed) but not for a
+        # single query, so `benchmark`/`embed` don't look stuck during the slow step.
+        raw = self._model.encode(
+            texts, normalize_embeddings=False, show_progress_bar=len(texts) > 64
+        )
         return [_postprocess(list(map(float, row)), self._spec.matryoshka_dim) for row in raw]
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:

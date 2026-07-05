@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -10,6 +11,8 @@ from vet_agent.eval.metrics import evaluate_query, mean_metrics, rank_by_score
 from vet_agent.ingestion.chunker import logical_key
 from vet_agent.ingestion.models import Chunk
 from vet_agent.knowledge.interfaces import Embedder
+
+logger = logging.getLogger(__name__)
 
 
 def _corpus_hash(chunks: list[Chunk]) -> str:
@@ -27,11 +30,19 @@ def embed_corpus(
     keys = [logical_key(c) for c in chunks]
     cache_path = cache_dir / f"{embedder.name}_{_corpus_hash(chunks)}.npz" if cache_dir else None
     if cache_path is not None and cache_path.exists():
+        logger.info("[%s] reusing cached embeddings for %d chunks", embedder.name, len(keys))
         return np.asarray(np.load(cache_path)["vectors"], dtype=np.float32), keys
+    logger.info(
+        "[%s] embedding %d chunks — this is the one-time slow step (minutes on CPU); "
+        "a progress bar follows ...",
+        embedder.name,
+        len(chunks),
+    )
     vectors = np.asarray(embedder.embed_documents([c.text for c in chunks]), dtype=np.float32)
     if cache_path is not None:
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         np.savez(cache_path, vectors=vectors)
+        logger.info("[%s] cached embeddings -> %s", embedder.name, cache_path)
     return vectors, keys
 
 
@@ -58,11 +69,19 @@ def benchmark_model(
 ) -> ModelScore:
     """Embed the corpus once, then score every eval case in-memory."""
     corpus, keys = embed_corpus(embedder, chunks, cache_dir)
+    logger.info("[%s] scoring %d eval queries ...", model_key, len(cases))
     per_query: list[dict[str, float]] = []
     for case in cases:
         ranked = rank_for_query(embedder.embed_query(case.query), corpus, keys)
         per_query.append(evaluate_query(ranked, set(case.relevant_logical_keys), ks))
-    return ModelScore(model=model_key, metrics=mean_metrics(per_query))
+    score = ModelScore(model=model_key, metrics=mean_metrics(per_query))
+    logger.info(
+        "[%s] done: recall@5=%.3f mrr=%.3f",
+        model_key,
+        score.metrics.get("recall@5", 0.0),
+        score.metrics.get("mrr", 0.0),
+    )
+    return score
 
 
 def _primary(score: ModelScore) -> tuple[float, float]:
