@@ -52,6 +52,39 @@ def test_existing_hashes_empty_when_no_collection():
     assert _store().existing_hashes() == {}
 
 
+def test_upsert_splits_large_input_across_multiple_client_calls():
+    # Regression: a single upsert of the whole corpus produced a ~262 MB request that
+    # Qdrant rejects (32 MB limit). Points must be sent in bounded per-request batches.
+    store = _store()
+    store.ensure_collection(dim=2)
+
+    calls = 0
+    real_upsert = store._client.upsert
+
+    def counting_upsert(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return real_upsert(*args, **kwargs)
+
+    store._client.upsert = counting_upsert  # type: ignore[method-assign]
+
+    n = QdrantVectorStore._UPSERT_BATCH * 2 + 1
+    points = [
+        _point(
+            f"00000000-0000-0000-0000-{i:012d}",
+            species=["dog"],
+            vector=[1.0, 0.0],
+            ch=f"h{i}",
+            key=f"p{i}",
+        )
+        for i in range(n)
+    ]
+    store.upsert(points)
+
+    assert calls == 3  # ceil(n / batch) with batch=256 -> 3 requests
+    assert len(store.existing_hashes()) == n  # every point landed
+
+
 def test_search_respects_species_filter_including_list_membership():
     store = _store()
     store.ensure_collection(dim=2)

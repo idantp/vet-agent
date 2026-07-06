@@ -68,28 +68,34 @@ class QdrantVectorStore:
                 break
         return result
 
+    # Qdrant rejects HTTP request bodies over 32 MB; ~256 vectors+payloads per PUT
+    # stays well under that while keeping the round-trip count low.
+    _UPSERT_BATCH = 256
+
     def upsert(self, points: list[PointPayload]) -> None:
         if not points:
             return
-        self._client.upsert(
-            self._collection,
-            points=[
-                models.PointStruct(
-                    id=p.point_id,
-                    vector=p.vector,
-                    payload={
-                        "drug_name": p.drug_name,
-                        "section_type": p.section_type.value,
-                        "species": p.species,
-                        "book_page": p.book_page,
-                        "text": p.text,
-                        "logical_key": p.logical_key,
-                        "content_hash": p.content_hash,
-                    },
-                )
-                for p in points
-            ],
-        )
+        for start in range(0, len(points), self._UPSERT_BATCH):
+            batch = points[start : start + self._UPSERT_BATCH]
+            self._client.upsert(
+                self._collection,
+                points=[
+                    models.PointStruct(
+                        id=p.point_id,
+                        vector=p.vector,
+                        payload={
+                            "drug_name": p.drug_name,
+                            "section_type": p.section_type.value,
+                            "species": p.species,
+                            "book_page": p.book_page,
+                            "text": p.text,
+                            "logical_key": p.logical_key,
+                            "content_hash": p.content_hash,
+                        },
+                    )
+                    for p in batch
+                ],
+            )
 
     def delete(self, ids: list[str]) -> None:
         if not ids:
