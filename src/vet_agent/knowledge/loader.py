@@ -2,6 +2,7 @@ import uuid
 from pathlib import Path
 
 from pydantic import BaseModel, TypeAdapter
+from tqdm import tqdm
 
 from vet_agent.ingestion.chunker import content_hash, logical_key
 from vet_agent.ingestion.models import Chunk
@@ -69,9 +70,13 @@ def load_chunks(
     to_embed = [pid for pid in desired if existing.get(pid) != hashes[pid]]
 
     points: list[PointPayload] = []
+    # Live progress + ETA over the slow embed step; disabled when there's nothing to
+    # embed (no-op re-run) so we don't print an empty 0/0 bar.
+    progress = tqdm(total=len(to_embed), unit="chunk", desc="embedding", disable=not to_embed)
     for start in range(0, len(to_embed), batch_size):
         batch = to_embed[start : start + batch_size]
         vectors = embedder.embed_documents([desired[pid].text for pid in batch])
+        progress.update(len(batch))
         for pid, vector in zip(batch, vectors, strict=True):
             chunk = desired[pid]
             points.append(
@@ -87,6 +92,7 @@ def load_chunks(
                     content_hash=hashes[pid],
                 )
             )
+    progress.close()
     store.upsert(points)
 
     pruned = 0
