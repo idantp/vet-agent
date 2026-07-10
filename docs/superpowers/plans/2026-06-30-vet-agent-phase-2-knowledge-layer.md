@@ -12,6 +12,33 @@
 
 ---
 
+## Status — ✅ COMPLETE (2026-07-10)
+
+All implementation tasks are done, reviewed (spec + code-quality), and `make check` is green
+(110 passed, 2 slow-deselected). Task-level status:
+
+- **Tasks 2.1–2.12** ✅ implemented + two-stage-reviewed.
+- **Task 2.11b** ✅ (added mid-execution): expand eval to **8 flows** + clinician persona + few-shots.
+- **Task 2.13** ✅ manual real-model + live-Qdrant verification (see that section for run results).
+- Mid-execution additions: **security hardening** (`SecretStr` API key, `_env_file`-isolated config
+  tests), a **gitignore fix** (track the committed eval artifacts under `data/`), and an **`embed`**
+  CLI command + progress logging + Apple **MPS** device selection.
+
+**Deviations from the plan/spec, as built:**
+- **Qwen3-0.6B dropped** — only MedEmbed-base vs bge-base benchmarked (the medical-vs-general
+  question; a 600M model was heavy on the fanless target machine).
+- **Species sampling is cat/dog-focused by default** (`other_fraction=0`), not "companion-dominant
+  with a capped exotic minority" — per user preference after reviewing a dry-run.
+- **Reranker lift is not measured in the benchmark** — the reranker interface + impl ship and
+  `retrieve --rerank` works, but quantifying lift on the frozen eval set is deferred.
+
+**Empirical outcome:** **bge-base won** (recall@5 0.764 vs medembed 0.741; mrr 0.781 vs 0.746) →
+`embedding_model` defaults to `bge-base`. Scorecard: `data/eval/benchmark_scorecard.md`.
+
+**Remaining:** finish the development branch (merge/PR).
+
+---
+
 ## File Structure
 
 **New package `src/vet_agent/knowledge/`:**
@@ -2198,6 +2225,22 @@ git commit -m "feat(cli): add benchmark, load, and retrieve commands"
 
 This task is **manual** (needs network for model weights, an Anthropic key, and a running Qdrant). It is the Phase-2 acceptance check, analogous to Phase-1's real-PDF verification.
 
+> **✅ COMPLETED (2026-07) — actual results** (steps below kept as the runbook of record):
+> - **Step 1** ✅ gitignore done via a `/data/*` un-ignore-exception so the committed eval set +
+>   scorecard stay tracked while the embedding cache + eval-set draft are ignored.
+> - **Step 2** ✅ real models exercised directly through `embed`/`benchmark`/`load` (MedEmbed + bge
+>   loaded and embedded all 15k chunks); `pytest -m slow` optional.
+> - **Steps 3a–3c** ✅ generated a **200-case** draft (8 flows × 25, cat/dog-focused by default),
+>   human-reviewed the phrasings, and promoted to `data/eval/retrieval_eval.yaml`.
+> - **Step 4** ✅ benchmarked **two** models (Qwen3 dropped) → **bge-base won** (recall@5 0.764 vs
+>   0.741; mrr 0.781 vs 0.746). Scorecard committed.
+> - **Step 5** ✅ pinned `embedding_model = "bge-base"`.
+> - **Step 6** ✅ loaded 15,292 chunks into `vet_chunks__bge_base`; re-run confirmed idempotency
+>   (`upserted=0 skipped=15292 pruned=0`).
+> - **Step 7** ✅ filtered retrieval returns correctly-cited Metronidazole dog-dose passages with no
+>   cat-only leakage; enrofloxacin/meloxicam filtered queries also validated.
+> - **Step 8** ✅ `make check` green; eval set, scorecard, and config pin committed.
+
 - [ ] **Step 1: Ignore the embedding cache and the eval-set draft**
 
 Add to `.gitignore`:
@@ -2265,13 +2308,13 @@ git commit -m "feat(eval): commit frozen eval set + benchmark scorecard; pin def
 
 ## Definition of Done (Phase 2)
 
-- `make check` is green (ruff + mypy strict + the fast, offline suite).
-- All automated tests run **offline**: `FakeEmbedder` + Qdrant `:memory:` mode; no network, no Docker, no model downloads in the default suite.
-- `data/eval/retrieval_eval.yaml` is committed and frozen; `vet-agent benchmark` produces `benchmark_scorecard.md` and a default model is chosen **on data**; reranker lift is measurable via `--rerank` in retrieval.
-- `vet-agent load` is proven idempotent — unit tests (skip/re-embed/prune) plus the live re-run in Task 2.13 Step 6.
-- `vet-agent retrieve "..." --section doses --species dog` returns correctly filtered, cited passages from a loaded Qdrant collection.
-- `config.embedding_model` is pinned to the benchmark winner; collections are name-suffixed per model.
-- `README.md` documents the full command workflow end-to-end — every `vet-agent` step in order (`ingest` → `embed` → `benchmark` → `load` → `retrieve`) with its purpose and a runnable example invocation.
+- [x] `make check` is green (ruff + mypy strict + the fast, offline suite).
+- [x] All automated tests run **offline**: `FakeEmbedder` + Qdrant `:memory:` mode; no network, no Docker, no model downloads in the default suite.
+- [x] `data/eval/retrieval_eval.yaml` is committed and frozen; `vet-agent benchmark` produces `benchmark_scorecard.md` and a default model is chosen **on data**; reranker lift is measurable via `--rerank` in retrieval (lift not yet *quantified* on the frozen set — deferred).
+- [x] `vet-agent load` is proven idempotent — unit tests (skip/re-embed/prune) plus the live re-run in Task 2.13 Step 6.
+- [x] `vet-agent retrieve "..." --section doses --species dog` returns correctly filtered, cited passages from a loaded Qdrant collection.
+- [x] `config.embedding_model` is pinned to the benchmark winner; collections are name-suffixed per model.
+- [ ] `README.md` documents the full command workflow end-to-end — every `vet-agent` step in order (`ingest` → `embed` → `benchmark` → `load` → `retrieve`) with its purpose and a runnable example invocation. **← the one open item.**
 
 ## Spec Coverage Map
 

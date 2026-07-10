@@ -1,7 +1,7 @@
 # Vet-Agent Phase 2 — Knowledge Layer (Design Spec)
 
 **Date:** 2026-06-28
-**Status:** Approved design — ready for implementation planning
+**Status:** ✅ **Implemented (2026-07)** — plan `docs/superpowers/plans/2026-06-30-vet-agent-phase-2-knowledge-layer.md`. As-built deviations from this design: Qwen3-0.6B dropped (2 models benchmarked; **bge-base won**); species sampling made cat/dog-focused (not "companion-dominant with capped exotics"); added an `embed` command + MPS device selection + `SecretStr` API-key handling; reranker interface/impl shipped but lift not yet measured on the frozen set.
 **Depends on:** Phase 0–1 (ingestion) — `docs/superpowers/plans/2026-06-19-vet-agent-phase-0-1-ingestion.md`
 **Parent spec:** `docs/superpowers/specs/2026-06-13-agentic-rag-vet-drug-assistant-design.md` (§2, §5–6, §10, §14 Phase 2)
 
@@ -20,7 +20,7 @@ rather than by assumption.
   `QdrantVectorStore`.
 - A self-contained **retrieval eval set** (`retrieval_eval.yaml`) — metadata-labeled, LLM-phrased,
   committed, frozen.
-- An **in-memory embedder benchmark** across three models + a **reranker-lift** measurement →
+- An **in-memory embedder benchmark** across the candidate models + a **reranker-lift** measurement →
   a committed scorecard, which chooses the default model.
 - An **idempotent Qdrant loader** (embed-only-changed, prune orphans).
 - A **filtered-retrieval demo** (`retrieve`) that validates the production path end-to-end.
@@ -33,7 +33,7 @@ production serving / scale-out.
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Embedder lineup | **MedEmbed-base-v0.1** (768d, medical) vs **bge-base-en-v1.5** (768d) vs **Qwen3-Embedding-0.6B** (768d, modern reference) | MedEmbed-base is a *direct fine-tune* of bge-base, so the A/B isolates exactly the medical-fine-tuning benefit. Qwen3 is a modern strong-model upper bound. |
+| Embedder lineup | **MedEmbed-base-v0.1** (768d, medical) vs **bge-base-en-v1.5** (768d, general) | MedEmbed-base is a *direct fine-tune* of bge-base, so the A/B isolates exactly the medical-fine-tuning benefit. **Deviation:** Qwen3-0.6B was in the original 3-model lineup as a modern-strong reference but was **dropped during execution** — the core question is medical-vs-general, and a 600M model was heavy on the target (fanless M3) machine. **Outcome (2026-07): bge-base won** (recall@5 0.764 vs 0.741, mrr 0.781 vs 0.746) — the human-medical fine-tune did not transfer to veterinary drug-handbook text, so `embedding_model` defaults to `bge-base`. |
 | Inference | **Local via `sentence-transformers`** | No embeddings API dependency; matches the pluggable/local learning goal; corpus is tiny. |
 | Benchmark path | **In-memory exact cosine** for the A/B, **Qdrant only for the chosen model** | ANN is lossy; routing the comparison through HNSW would blend embedder quality with index drop-rate. In-memory numpy is exact, fast (15k×768 ≈ 47 MB), deterministic. |
 | Eval set | **Metadata-labeled, LLM-phrased, frozen YAML** | Chunk metadata (`drug`/`section`/`species`) gives free ground-truth labels; Claude writes natural phrasing. Generation is a one-time offline step → deterministic, key-free CI. |
@@ -117,8 +117,8 @@ class VectorStore(Protocol):
     ) -> list[Passage]: ...
 ```
 
-`embed_documents` vs. `embed_query` are split so query-prefixed models (Qwen3) apply their
-instruction prefix to queries only; for BGE/MedEmbed the two paths are identical. **All embedders
+`embed_documents` vs. `embed_query` are split so a query-prefixed model could apply its instruction
+prefix to queries only; for the two shipped models (BGE/MedEmbed) the paths are identical (no prefix). **All embedders
 L2-normalize outputs**, so cosine == dot product everywhere.
 
 ## 5. Embedder impls + model registry (`knowledge/embedders.py`)
@@ -131,18 +131,20 @@ class ModelSpec:
     hf_id: str
     dim: int
     query_prefix: str | None = None   # applied in embed_query only
-    matryoshka_dim: int | None = None # truncate+renormalize (Qwen3 -> 768)
+    matryoshka_dim: int | None = None # truncate+renormalize to this dim (kept for future models)
 
 MODEL_REGISTRY: dict[str, ModelSpec] = {
     "medembed-base": ModelSpec("abhinand/MedEmbed-base-v0.1", dim=768),
     "bge-base":      ModelSpec("BAAI/bge-base-en-v1.5",       dim=768),
-    "qwen3-0.6b":    ModelSpec("Qwen/Qwen3-Embedding-0.6B",   dim=768,
-                               query_prefix="Instruct: Retrieve passages...\nQuery: ",
-                               matryoshka_dim=768),
 }
 
 def get_embedder(key: str) -> Embedder: ...
 ```
+
+**As-built:** only these two 768-d models ship (Qwen3-0.6B was dropped, see §2). `query_prefix` /
+`matryoshka_dim` remain on `ModelSpec` as unused-but-ready knobs for adding a query-prefixed or
+larger model later. `SentenceTransformerEmbedder` also selects the Apple **MPS** device when
+available (falls back to CPU) to speed up on-device embedding.
 
 Adding a model = one registry line. The default model key lives in `config.py` and is set to the
 benchmark winner. Exact prefix strings and the current `sentence-transformers` API (`encode` vs.
@@ -304,7 +306,8 @@ declared winner) and `benchmark_scorecard.json`. **The winner (best recall@5 / M
 | Command | New? | Behavior |
 |---|---|---|
 | `ingest <pdf>` | exists | Unchanged (PDF → monographs/chunks/parse_report). |
-| `benchmark` | new | `[--chunks] [--eval-set] [--models medembed-base,bge-base,qwen3-0.6b] [--k 1,3,5,10] [--rerank/--no-rerank] [--cache-dir] [--out]` → scorecard. |
+| `embed` | new | `[--models medembed-base,bge-base] [--chunks] [--cache-dir]` → embed the corpus per model and cache vectors (the slow step); run one model at a time to spread load. |
+| `benchmark` | new | `[--chunks] [--eval-set] [--models medembed-base,bge-base] [--k 1,3,5,10] [--cache-dir] [--out]` → reuses the `embed` cache, scores, writes scorecard. |
 | `load` | new | `[--chunks] [--model <config default>] [--collection-prefix] [--batch-size 64] [--no-prune]` → idempotent Qdrant upsert; prints `LoadReport`. |
 | `retrieve QUERY` | new | `QUERY` (required, natural language) `[--drug] [--section] [--species] [--top-k 5] [--rerank]` → filtered semantic search; prints passages with `drug / section / page` citations. |
 
@@ -313,7 +316,7 @@ declared winner) and `benchmark_scorecard.json`. **The winner (best recall@5 / M
 ## 13. Config additions (`config.py`)
 
 ```python
-embedding_model: str = "medembed-base"        # default; set to benchmark winner
+embedding_model: str = "bge-base"             # benchmark winner (general beat the medical model)
 qdrant_collection_prefix: str = "vet_chunks"  # active collection = f"{prefix}__{model_key}"
 rerank_enabled: bool = False
 reranker_model: str = "bge-reranker-v2-m3"
@@ -349,16 +352,16 @@ Add to `pyproject.toml` (verify latest on PyPI/HF before pinning — standing me
   it stays out of main deps; Phase 4 promotes it to a main dependency when the agent needs it at
   runtime.
 
-## 16. Definition of Done
+## 16. Definition of Done — ✅ met (2026-07)
 
-- `make check` green (ruff + mypy strict + pytest), tests offline and fast.
-- `data/eval/retrieval_eval.yaml` committed; `benchmark` produces
-  `data/eval/benchmark_scorecard.md` and a default model is chosen **on data**; reranker lift
-  measured and reported.
-- `load` proven idempotent by tests (skip-unchanged, re-embed-changed, prune-orphan) against
-  in-memory Qdrant.
-- `retrieve "metronidazole dose for a 12 kg dog" --section doses --species dog` returns correctly
-  filtered, cited passages from a loaded Qdrant collection (the Phase 2 demo).
+- [x] `make check` green (ruff + mypy strict + pytest), tests offline and fast (110 passed, 2 slow-deselected).
+- [x] `data/eval/retrieval_eval.yaml` committed (200 cat/dog-focused, human-reviewed cases); `benchmark`
+  produced `data/eval/benchmark_scorecard.md` and the default model was chosen **on data** (bge-base).
+  *Reranker lift is not yet measured on the frozen set — deferred (interface + impl ship; off by default).*
+- [x] `load` proven idempotent by tests (skip-unchanged, re-embed-changed, prune-orphan) against
+  in-memory Qdrant, **and** verified on live Qdrant (re-run: `upserted=0 skipped=15292 pruned=0`).
+- [x] `retrieve "...12 kg dog..." --section doses --species dog` returns correctly filtered, cited
+  passages from the loaded `vet_chunks__bge_base` collection (the Phase 2 demo).
 
 ## 17. What's Next (later plans)
 
