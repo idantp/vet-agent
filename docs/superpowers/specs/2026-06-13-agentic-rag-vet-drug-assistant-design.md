@@ -238,9 +238,9 @@ Each phase ends in something runnable + tested, and becomes its own spec → pla
 
 | Phase | Deliverable | Demo |
 |---|---|---|
-| **0. Scaffold** | uv project, config, ruff/mypy/pytest, docker-compose (Qdrant) | make targets, green CI |
-| **1. Ingestion** | PDF → `Monograph` → section/species chunks + parse_report | inspect parsed monographs |
-| **2. Knowledge layer** | Embedder/Reranker/VectorStore interfaces, load into Qdrant | filtered retrieval from a script |
+| **0. Scaffold** ✅ | uv project, config, ruff/mypy/pytest, docker-compose (Qdrant) | make targets, green CI |
+| **1. Ingestion** ✅ | PDF → `Monograph` → section/species chunks + parse_report | inspect parsed monographs |
+| **2. Knowledge layer** ✅ | Embedder/Reranker/VectorStore interfaces, load into Qdrant | filtered retrieval from a script |
 | **3. Tools** | the 5 tools, esp. pure-Python `calculate_dose` (unit-tested) | dose math + retrieval in isolation |
 | **4. Agent** | LangGraph graph + guardrails + prompts | end-to-end Q&A (CLI) |
 | **5. API/CLI** | FastAPI (+streaming) + Typer client | HTTP `/ask`, the real product |

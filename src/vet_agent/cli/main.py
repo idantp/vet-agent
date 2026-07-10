@@ -2,10 +2,20 @@ import logging
 from pathlib import Path
 
 import typer
+from qdrant_client import QdrantClient
 
+from vet_agent.config import Settings
+from vet_agent.eval.benchmark import ModelScore, benchmark_model, embed_corpus, write_scorecard
+from vet_agent.eval.eval_set import load_eval_set
+from vet_agent.ingestion.models import SectionType
 from vet_agent.ingestion.pdf_reader import extract_pages
 from vet_agent.ingestion.pipeline import run_ingestion
 from vet_agent.ingestion.report import write_artifacts
+from vet_agent.knowledge.embedders import MODEL_REGISTRY, get_embedder
+from vet_agent.knowledge.interfaces import Reranker
+from vet_agent.knowledge.loader import load_chunks, read_chunks
+from vet_agent.knowledge.retrieval import Retriever
+from vet_agent.knowledge.vector_store import QdrantVectorStore, collection_name
 
 app = typer.Typer(help="Vet-Agent CLI")
 
@@ -78,6 +88,138 @@ def ingest(
             f"to proceed during local iteration."
         )
         raise typer.Exit(code=1)
+
+
+@app.command()
+def embed(
+    models: str = typer.Option(
+        "medembed-base",
+        help=f"Comma-separated model keys ({', '.join(sorted(MODEL_REGISTRY))})",
+    ),  # noqa: B008
+    chunks: Path = typer.Option(Path("data/ingest/chunks.json")),  # noqa: B008
+    cache_dir: Path = typer.Option(Path("data/embeddings")),  # noqa: B008
+) -> None:
+    """Embed the corpus for one or more models and cache the vectors (the slow step).
+
+    Run this per model to spread the load (e.g. one at a time, letting the machine cool
+    between); `benchmark` then reuses the cache and runs fast.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(message)s", force=True)
+    if not chunks.is_file():
+        typer.echo(f"Error: chunks file not found at {chunks}")
+        raise typer.Exit(code=1)
+    parsed = read_chunks(chunks)
+    for key in [m.strip() for m in models.split(",")]:
+        if key not in MODEL_REGISTRY:
+            typer.echo(f"Error: unknown model '{key}'. Known: {sorted(MODEL_REGISTRY)}")
+            raise typer.Exit(code=1)
+        typer.echo(f"Embedding corpus with {key} ...")
+        embed_corpus(get_embedder(key), parsed, cache_dir)
+    typer.echo("Done embedding. Run 'vet-agent benchmark' to score (reuses the cache).")
+
+
+@app.command()
+def benchmark(
+    chunks: Path = typer.Option(Path("data/ingest/chunks.json")),  # noqa: B008
+    eval_set: Path = typer.Option(Path("data/eval/retrieval_eval.yaml")),  # noqa: B008
+    models: str = typer.Option("medembed-base,bge-base"),  # noqa: B008
+    ks: str = typer.Option("1,3,5,10", help="Comma-separated k cutoffs"),  # noqa: B008
+    cache_dir: Path = typer.Option(Path("data/embeddings")),  # noqa: B008
+    out_dir: Path = typer.Option(Path("data/eval")),  # noqa: B008
+) -> None:
+    """Benchmark candidate embedders in-memory and write a scorecard.
+
+    Reuses vectors cached by a prior `embed`/`benchmark`; embeds (slow) only on a miss.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(message)s", force=True)
+    if not chunks.is_file():
+        typer.echo(f"Error: chunks file not found at {chunks}")
+        raise typer.Exit(code=1)
+    if not eval_set.is_file():
+        typer.echo(f"Error: eval set not found at {eval_set}")
+        raise typer.Exit(code=1)
+    k_values = [int(x) for x in ks.split(",")]
+    parsed = read_chunks(chunks)
+    cases = load_eval_set(eval_set)
+    scores: list[ModelScore] = []
+    for key in [m.strip() for m in models.split(",")]:
+        if key not in MODEL_REGISTRY:
+            typer.echo(f"Error: unknown model '{key}'. Known: {sorted(MODEL_REGISTRY)}")
+            raise typer.Exit(code=1)
+        typer.echo(f"Benchmarking {key} ...")
+        scores.append(benchmark_model(key, get_embedder(key), parsed, cases, k_values, cache_dir))
+    write_scorecard(scores, k_values, out_dir)
+    typer.echo(f"Scorecard -> {out_dir / 'benchmark_scorecard.md'}")
+
+
+@app.command()
+def load(
+    chunks: Path = typer.Argument(Path("data/ingest/chunks.json")),  # noqa: B008
+    model: str = typer.Option("", help="Override the configured embedding model"),  # noqa: B008
+    no_prune: bool = typer.Option(False, "--no-prune"),  # noqa: B008
+) -> None:
+    """Idempotently embed + load chunks into Qdrant."""
+    if not chunks.is_file():
+        typer.echo(f"Error: chunks file not found at {chunks}")
+        raise typer.Exit(code=1)
+    settings = Settings()
+    model_key = model or settings.embedding_model
+    embedder = get_embedder(model_key)
+    client = QdrantClient(url=settings.qdrant_url)
+    store = QdrantVectorStore(client, collection_name(settings.qdrant_collection_prefix, model_key))
+    report = load_chunks(
+        read_chunks(chunks),
+        embedder,
+        store,
+        prune=not no_prune,
+        batch_size=settings.embedding_batch_size,
+    )
+    typer.echo(
+        f"Loaded into '{collection_name(settings.qdrant_collection_prefix, model_key)}': "
+        f"upserted={report.upserted} skipped={report.skipped} pruned={report.pruned}"
+    )
+
+
+@app.command()
+def retrieve(
+    query: str = typer.Argument(...),  # noqa: B008
+    drug: str = typer.Option("", help="Filter by drug name"),  # noqa: B008
+    section: str = typer.Option("", help="Filter by section_type, e.g. doses"),  # noqa: B008
+    species: str = typer.Option("", help="Filter by species, e.g. dog"),  # noqa: B008
+    top_k: int = typer.Option(5),  # noqa: B008
+    rerank: bool = typer.Option(False, "--rerank"),  # noqa: B008
+) -> None:
+    """Filtered semantic search against the loaded Qdrant collection."""
+    if not query.strip():
+        typer.echo("Error: query must not be blank.")
+        raise typer.Exit(code=1)
+    settings = Settings()
+    model_key = settings.embedding_model
+    embedder = get_embedder(model_key)
+    client = QdrantClient(url=settings.qdrant_url)
+    store = QdrantVectorStore(client, collection_name(settings.qdrant_collection_prefix, model_key))
+    reranker: Reranker | None = None
+    if rerank:
+        from vet_agent.knowledge.rerankers import CrossEncoderReranker
+
+        reranker = CrossEncoderReranker(settings.reranker_model)
+    retriever = Retriever(embedder, store, reranker=reranker)
+    section_type = SectionType(section) if section else None
+    hits = retriever.retrieve(
+        query,
+        drug=drug or None,
+        section=section_type,
+        species=species or None,
+        top_k=top_k,
+        rerank=rerank,
+    )
+    if not hits:
+        typer.echo("No results.")
+        return
+    for h in hits:
+        score = f"{h.score:.3f}" if h.score is not None else "n/a"
+        typer.echo(f"[{score}] {h.drug_name} / {h.section_type.value} / p.{h.book_page}")
+        typer.echo(f"    {h.text[:200]}")
 
 
 if __name__ == "__main__":
