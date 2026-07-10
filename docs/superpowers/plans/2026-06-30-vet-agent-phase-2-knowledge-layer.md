@@ -2314,7 +2314,7 @@ git commit -m "feat(eval): commit frozen eval set + benchmark scorecard; pin def
 - [x] `vet-agent load` is proven idempotent — unit tests (skip/re-embed/prune) plus the live re-run in Task 2.13 Step 6.
 - [x] `vet-agent retrieve "..." --section doses --species dog` returns correctly filtered, cited passages from a loaded Qdrant collection.
 - [x] `config.embedding_model` is pinned to the benchmark winner; collections are name-suffixed per model.
-- [ ] `README.md` documents the full command workflow end-to-end — every `vet-agent` step in order (`ingest` → `embed` → `benchmark` → `load` → `retrieve`) with its purpose and a runnable example invocation. **← the one open item.**
+- [x] `README.md` documents the full command workflow end-to-end — every `vet-agent` step in order (`ingest` → `embed` → `benchmark` → `load` → `retrieve`) with its purpose and a runnable example invocation.
 
 ## Spec Coverage Map
 
