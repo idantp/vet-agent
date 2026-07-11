@@ -1,8 +1,8 @@
 import re
 from decimal import Decimal
-from typing import Protocol
+from typing import Any, Protocol
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from vet_agent.knowledge.interfaces import Passage
 from vet_agent.tools.models import MAX_MG_PER_KG, DoseRule, DoseRuleSet, NeedsClarification
@@ -137,3 +137,113 @@ class ExtractDoseRule:
             reason="multiple regimens in passage; provide an indication or set all_regimens",
             candidates=rules,
         )
+
+
+_EXTRACTION_TOOL_NAME = "record_regimens"
+
+# Dose values are strings so Decimal parses them exactly (JSON floats would
+# smuggle in binary-float artifacts before validation could see them).
+_EXTRACTION_TOOL: dict[str, Any] = {
+    "name": _EXTRACTION_TOOL_NAME,
+    "description": (
+        "Record every mg/kg dosing regimen found in the veterinary handbook passage, "
+        "one entry per distinct regimen (per indication, and per lettered alternative "
+        "such as 'a)' / 'b)')."
+    ),
+    "strict": True,
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "regimens": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "indication": {
+                            "type": "string",
+                            "description": "What this regimen treats, as stated in the text.",
+                        },
+                        "mg_per_kg_low": {
+                            "type": "string",
+                            "description": (
+                                "The mg/kg dose (or low end of a range), copied verbatim "
+                                "as a plain number string, e.g. '25' or '0.5'."
+                            ),
+                        },
+                        "mg_per_kg_high": {
+                            "type": ["string", "null"],
+                            "description": "High end of a range, verbatim; null if no range.",
+                        },
+                        "route": {
+                            "type": "string",
+                            "description": "Route verbatim, e.g. 'PO', 'IV over 30 min'.",
+                        },
+                        "frequency": {
+                            "type": "string",
+                            "description": "Frequency/duration verbatim, e.g. 'q12h for 8 days'.",
+                        },
+                        "notes": {
+                            "type": ["string", "null"],
+                            "description": "Combination therapy or caveats; null if none.",
+                        },
+                    },
+                    "required": [
+                        "indication",
+                        "mg_per_kg_low",
+                        "mg_per_kg_high",
+                        "route",
+                        "frequency",
+                        "notes",
+                    ],
+                    "additionalProperties": False,
+                },
+            }
+        },
+        "required": ["regimens"],
+        "additionalProperties": False,
+    },
+}
+
+_EXTRACTION_SYSTEM = (
+    "You transcribe dosing regimens from a veterinary drug handbook passage into "
+    "structured records. Copy every number exactly as written - never compute, "
+    "convert, round, or infer a value that is not literally in the text. Record "
+    "only regimens expressed in mg/kg; skip per-animal, mg/m2, or otherwise "
+    "non-mg/kg doses. Doses belonging to OTHER drugs mentioned in passing (e.g. a "
+    "combination-therapy partner) go in 'notes', never in the dose fields."
+)
+
+
+class AnthropicRegimenExtractor:
+    """RegimenExtractor backed by Claude with forced, strict tool-use output."""
+
+    def __init__(self, model: str, *, api_key: str | None = None, client: Any = None) -> None:
+        if client is None:
+            from anthropic import Anthropic  # lazy: keeps import cost out of pure paths
+
+            client = Anthropic(api_key=api_key)
+        self._client = client
+        self._model = model
+
+    def extract_regimens(self, passage_text: str) -> list[ExtractedRegimen]:
+        message = self._client.messages.create(
+            model=self._model,
+            max_tokens=2048,
+            system=_EXTRACTION_SYSTEM,
+            tools=[_EXTRACTION_TOOL],
+            tool_choice={"type": "tool", "name": _EXTRACTION_TOOL_NAME},
+            messages=[{"role": "user", "content": f"Passage:\n\n{passage_text}"}],
+        )
+        for block in message.content:
+            if getattr(block, "type", None) == "tool_use":
+                raw = block.input.get("regimens", [])
+                return [r for r in map(_parse_regimen, raw) if r is not None]
+        return []
+
+
+def _parse_regimen(raw: dict[str, Any]) -> ExtractedRegimen | None:
+    """Validate one raw regimen; malformed entries are dropped (grounding is separate)."""
+    try:
+        return ExtractedRegimen.model_validate(raw)
+    except ValidationError:
+        return None
