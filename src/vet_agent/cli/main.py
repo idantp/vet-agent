@@ -1,4 +1,5 @@
 import logging
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 import typer
@@ -16,6 +17,15 @@ from vet_agent.knowledge.interfaces import Reranker
 from vet_agent.knowledge.loader import load_chunks, read_chunks
 from vet_agent.knowledge.retrieval import Retriever
 from vet_agent.knowledge.vector_store import QdrantVectorStore, collection_name
+from vet_agent.tools.dose_extraction import (
+    AnthropicRegimenExtractor,
+    ExtractDoseRule,
+    ExtractDoseRuleInput,
+)
+from vet_agent.tools.dose_math import CalculateDoseInput, calculate_dose
+from vet_agent.tools.drug_index import DrugIndex
+from vet_agent.tools.models import DoseRule, DoseRuleSet, NeedsClarification
+from vet_agent.tools.retrieve import RetrieveMonograph, RetrieveMonographInput
 
 app = typer.Typer(help="Vet-Agent CLI")
 
@@ -220,6 +230,112 @@ def retrieve(
         score = f"{h.score:.3f}" if h.score is not None else "n/a"
         typer.echo(f"[{score}] {h.drug_name} / {h.section_type.value} / p.{h.book_page}")
         typer.echo(f"    {h.text[:200]}")
+
+
+@app.command()
+def dose(
+    question: str = typer.Argument(..., help="Natural-language dose question"),  # noqa: B008
+    drug: str = typer.Option(..., help="Drug name (resolved against the monographs)"),  # noqa: B008
+    species: str = typer.Option(..., help="Patient species, e.g. dog"),  # noqa: B008
+    weight: str = typer.Option(..., help="Patient weight (number)"),  # noqa: B008
+    weight_unit: str = typer.Option("kg", help="kg or lb"),  # noqa: B008
+    indication: str = typer.Option("", help="Indication hint, e.g. giardia"),  # noqa: B008
+    all_regimens: bool = typer.Option(  # noqa: B008
+        False, "--all-regimens", help="List every grounded regimen instead of picking one"
+    ),
+    chunks: Path = typer.Option(Path("data/ingest/chunks.json")),  # noqa: B008
+) -> None:
+    """Phase 3 demo: retrieve -> extract_dose_rule -> calculate_dose, with citations."""
+    if not chunks.is_file():
+        typer.echo(f"Error: chunks file not found at {chunks}")
+        raise typer.Exit(code=1)
+    try:
+        weight_value = Decimal(weight)
+    except InvalidOperation as exc:
+        typer.echo(f"Error: weight must be a number, got '{weight}'")
+        raise typer.Exit(code=1) from exc
+    if weight_unit not in ("kg", "lb"):
+        typer.echo(f"Error: weight-unit must be kg or lb, got '{weight_unit}'")
+        raise typer.Exit(code=1)
+    settings = Settings()
+    if settings.anthropic_api_key is None:
+        typer.echo("Error: VET_ANTHROPIC_API_KEY is required for dose extraction.")
+        raise typer.Exit(code=1)
+
+    model_key = settings.embedding_model
+    embedder = get_embedder(model_key)
+    client = QdrantClient(url=settings.qdrant_url)
+    store = QdrantVectorStore(client, collection_name(settings.qdrant_collection_prefix, model_key))
+    drug_index = DrugIndex.from_chunks(chunks)
+
+    retrieve_tool = RetrieveMonograph(Retriever(embedder, store), drug_index)
+    retrieved = retrieve_tool(
+        RetrieveMonographInput(
+            query=question, drug=drug, section=SectionType.DOSES, species=species
+        )
+    )
+    if retrieved.kind == "drug_not_found":
+        hint = (
+            f" Did you mean: {', '.join(retrieved.suggestions)}?" if retrieved.suggestions else ""
+        )
+        typer.echo(f"Drug not found: '{retrieved.query}'.{hint}")
+        raise typer.Exit(code=1)
+    if retrieved.kind == "no_passages_found":
+        typer.echo(f"No dose passages found for filters {retrieved.filters}.")
+        raise typer.Exit(code=1)
+
+    passage = retrieved.passages[0]
+    typer.echo(f"Passage: {passage.drug_name} / doses / p.{passage.book_page}")
+
+    extractor = AnthropicRegimenExtractor(
+        settings.reasoning_model,
+        api_key=settings.anthropic_api_key.get_secret_value(),
+    )
+    extracted = ExtractDoseRule(extractor)(
+        ExtractDoseRuleInput(
+            passage=passage, indication=indication or None, all_regimens=all_regimens
+        )
+    )
+
+    if isinstance(extracted, NeedsClarification):
+        typer.echo(f"Needs clarification: {extracted.reason}")
+        for c in extracted.candidates:
+            typer.echo(f"  - {_describe_rule(c)}")
+        return
+    if isinstance(extracted, DoseRuleSet):
+        typer.echo(f"{len(extracted.rules)} grounded regimen(s):")
+        for rule in extracted.rules:
+            typer.echo(f"  - {_describe_rule(rule)}")
+        return
+
+    result = calculate_dose(
+        CalculateDoseInput(weight=weight_value, weight_unit=weight_unit, rule=extracted)  # type: ignore[arg-type]
+    )
+    dose_range = f"{result.dose_mg_low} mg"
+    if result.dose_mg_high is not None:
+        dose_range += f" - {result.dose_mg_high} mg"
+    typer.echo(
+        f"Dose: {dose_range} {result.route} {result.frequency} "
+        f"({result.rule.mg_per_kg_low} mg/kg x {result.weight_kg} kg)"
+    )
+    typer.echo(f"Indication: {result.indication}")
+    if result.notes:
+        typer.echo(f"Notes: {result.notes}")
+    typer.echo(
+        f"Source: {result.drug_name}, Doses, p.{result.rule.book_page} "
+        f"[{result.rule.source_logical_key}]"
+    )
+    typer.echo("Decision support only - consult a licensed veterinarian.")
+
+
+def _describe_rule(rule: DoseRule) -> str:
+    dose_str = f"{rule.mg_per_kg_low}"
+    if rule.mg_per_kg_high is not None:
+        dose_str += f"-{rule.mg_per_kg_high}"
+    text = f"{rule.indication}: {dose_str} mg/kg {rule.route} {rule.frequency}"
+    if rule.notes:
+        text += f" ({rule.notes})"
+    return text
 
 
 if __name__ == "__main__":

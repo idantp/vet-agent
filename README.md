@@ -93,6 +93,21 @@ uv run vet-agent retrieve "what is enrofloxacin used for" --drug Enrofloxacin --
 
 Each hit prints as `[score] Drug / section / p.<page>` + a text snippet — always cited.
 
+### 6. Ask a dose question (Phase 3 demo)
+
+Chains the Phase 3 tools end to end — filtered retrieval → LLM regimen extraction
+(grounded against the cited passage) → pure-Python dose arithmetic:
+
+```bash
+uv run vet-agent dose "metronidazole dose for a dog with giardia?" \
+  --drug metronidazole --species dog --weight 12 --indication giardia
+# or list every grounded regimen in the passage:
+uv run vet-agent dose "metronidazole dosing options for dogs?" \
+  --drug metronidazole --species dog --weight 12 --all-regimens
+```
+
+Requires a loaded Qdrant collection (step 5) and `VET_ANTHROPIC_API_KEY`.
+
 ## Regenerating the eval set (optional)
 
 The committed `data/eval/retrieval_eval.yaml` (200 cat/dog-focused, human-reviewed questions across 8
