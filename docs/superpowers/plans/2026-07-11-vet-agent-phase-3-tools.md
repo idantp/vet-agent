@@ -12,6 +12,41 @@
 
 ---
 
+## Status — ✅ COMPLETE (2026-07-11)
+
+All 11 tasks implemented via subagent-driven development (fresh implementer per task,
+two-stage review — spec compliance then code quality — after each), plus a final
+whole-range review. `make check` green throughout: ruff, mypy strict (35 source files),
+**169 passed, 2 slow-deselected**, fully offline.
+
+**Review fixes applied beyond the plan as written** (each caught by a task review):
+- `DoseRule`/`DoseResult` are **frozen** (`ConfigDict(frozen=True)`) and `species` requires
+  `min_length=1` — construction-time bounds were bypassable by attribute mutation.
+- The discriminator test covers all **9** kind-bearing models (the plan's verbatim test
+  missed `IndicationReport`).
+- `fetch_section` **natural-sorts ordinals** (`_section_order`: chunk 10 after chunk 2) —
+  the plan's "sort by logical_key" spec mis-ordered the 19 real corpus groups with ≥10 chunks.
+- New safety test pins the hallucinated-**high** grounding discard (mutation-verified);
+  `ExtractedRegimen` dose fields mirror `MAX_MG_PER_KG` so absurd transcriptions fail at the
+  parse boundary instead of raising mid-tool.
+
+**Task 3.11 live verification (real Qdrant + real Claude) — all PASS:**
+- `vet-agent load` idempotent: `upserted=0 skipped=15292 pruned=0`.
+- Selection mode (12 kg dog, giardia): correctly returned `Needs clarification: multiple
+  regimens match indication 'giardia'` with **three** grounded candidates (25 mg/kg combo,
+  50 mg/kg monotherapy variants) from the p.873 dog passage — no silent pick, no invented
+  numbers, no cross-species bleed.
+- `--all-regimens`: 9 grounded regimens, each with indication/mg-kg/route/frequency + citation.
+- Fuzzy resolution (`metronidazol` → Metronidazole) and `DrugNotFound` for `xyzzy` (exit 1) work.
+
+**Deferred cosmetic notes from the final review** (non-blocking): narrow the CLI's
+`type: ignore[arg-type]` via a `cast` on `weight_unit`; unify union-narrowing style in
+`cli/main.py`; surface partial grounding-discard counts in `NeedsClarification.reason`.
+
+**Remaining:** finish the development branch (merge/PR).
+
+---
+
 ## File Structure
 
 **New package `src/vet_agent/tools/`:**
@@ -2232,9 +2267,9 @@ Note the actual outputs in the plan's Status section (mirroring Phase 2's Task 2
 
 ## Definition of Done (from spec §12)
 
-- [ ] `make check` green (ruff + mypy strict + pytest), all new tests offline and fast.
-- [ ] All five tools implemented with the spec'd contracts; `calculate_dose` exhaustively tested.
-- [ ] `VectorStore.fetch_section()` + `canonical_species()` shipped with tests.
-- [ ] `anthropic` promoted to main deps; `pint` added.
-- [ ] Manual verification: `vet-agent dose` answers a real dose question end to end against live
+- [x] `make check` green (ruff + mypy strict + pytest), all new tests offline and fast.
+- [x] All five tools implemented with the spec'd contracts; `calculate_dose` exhaustively tested.
+- [x] `VectorStore.fetch_section()` + `canonical_species()` shipped with tests.
+- [x] `anthropic` promoted to main deps; `pint` added.
+- [x] Manual verification: `vet-agent dose` answers a real dose question end to end against live
       Qdrant (cited dose or candidate regimens), and `--all-regimens` lists every grounded option.
