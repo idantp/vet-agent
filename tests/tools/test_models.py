@@ -11,6 +11,7 @@ from vet_agent.tools.models import (
     DoseRule,
     DoseRuleSet,
     DrugNotFound,
+    IndicationReport,
     NeedsClarification,
     NoPassagesFound,
     RetrievedPassages,
@@ -37,6 +38,8 @@ def test_dose_rule_defaults_and_kind():
     assert rule.kind == "dose_rule"
     assert rule.mg_per_kg_high is None
     assert rule.notes is None
+    with pytest.raises(ValidationError):
+        rule.mg_per_kg_low = Decimal("1")  # frozen: mutation must fail
 
 
 def test_dose_rule_rejects_nonpositive_and_absurd_doses():
@@ -101,5 +104,6 @@ def test_result_unions_have_distinct_kind_discriminators():
             flagged=[],
             unresolved_other_drugs=[],
         ).kind,
+        IndicationReport(drug_name="x", species=None, passages=[]).kind,
     }
-    assert len(kinds) == 8  # every union member is distinguishable
+    assert len(kinds) == 9  # every kind-bearing model is distinguishable

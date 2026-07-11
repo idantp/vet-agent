@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from vet_agent.knowledge.interfaces import Passage
 
@@ -13,9 +13,12 @@ MAX_MG_PER_KG = Decimal(10_000)
 class DoseRule(BaseModel):
     """One dosing regimen, always traceable to a cited Doses passage."""
 
+    model_config = ConfigDict(frozen=True)
+
     kind: Literal["dose_rule"] = "dose_rule"
     drug_name: str
-    species: list[str]  # mirrors the source chunk, e.g. ["dog"] or ["cat", "dog"]
+    # Mirrors the source chunk, e.g. ["dog"] or ["cat", "dog"].
+    species: list[str] = Field(min_length=1)
     indication: str
     mg_per_kg_low: Decimal = Field(gt=0, le=MAX_MG_PER_KG)
     mg_per_kg_high: Decimal | None = Field(default=None, gt=0, le=MAX_MG_PER_KG)
@@ -70,9 +73,11 @@ class RetrievedPassages(BaseModel):
 class DoseResult(BaseModel):
     """A computed dose; embeds the full rule for provenance (rule -> logical_key -> page)."""
 
+    model_config = ConfigDict(frozen=True)
+
     kind: Literal["dose_result"] = "dose_result"
     drug_name: str
-    species: list[str]
+    species: list[str] = Field(min_length=1)
     indication: str
     weight_kg: Decimal
     dose_mg_low: Decimal
