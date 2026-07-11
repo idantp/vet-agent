@@ -1,4 +1,5 @@
 import re
+from typing import Any
 from uuid import UUID
 
 from qdrant_client import QdrantClient, models
@@ -13,8 +14,7 @@ def collection_name(prefix: str, model_key: str) -> str:
     return f"{prefix}__{safe}"
 
 
-def _to_passage(point: models.ScoredPoint) -> Passage:
-    payload = point.payload or {}
+def _payload_to_passage(payload: dict[str, Any], score: float | None) -> Passage:
     return Passage(
         drug_name=payload["drug_name"],
         section_type=SectionType(payload["section_type"]),
@@ -22,7 +22,7 @@ def _to_passage(point: models.ScoredPoint) -> Passage:
         book_page=int(payload["book_page"]),
         text=payload["text"],
         logical_key=payload["logical_key"],
-        score=point.score,
+        score=score,
     )
 
 
@@ -133,4 +133,32 @@ class QdrantVectorStore:
             limit=top_k,
             with_payload=True,
         )
-        return [_to_passage(point) for point in response.points]
+        return [_payload_to_passage(point.payload or {}, point.score) for point in response.points]
+
+    def fetch_section(self, drug: str, section: SectionType) -> list[Passage]:
+        """All chunks for (drug, section) via exact filtered scroll - complete, no ANN."""
+        if not self._client.collection_exists(self._collection):
+            return []
+        flt = models.Filter(
+            must=[
+                models.FieldCondition(key="drug_name", match=models.MatchValue(value=drug)),
+                models.FieldCondition(
+                    key="section_type", match=models.MatchValue(value=section.value)
+                ),
+            ]
+        )
+        passages: list[Passage] = []
+        offset: int | str | UUID | None = None
+        while True:
+            points, offset = self._client.scroll(
+                self._collection,
+                scroll_filter=flt,
+                with_payload=True,
+                with_vectors=False,
+                limit=256,
+                offset=offset,
+            )
+            passages.extend(_payload_to_passage(p.payload or {}, None) for p in points)
+            if offset is None:
+                break
+        return sorted(passages, key=lambda p: p.logical_key)
