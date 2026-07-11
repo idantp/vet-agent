@@ -129,6 +129,14 @@ def test_grounding_is_number_boundary_aware():
     assert isinstance(out, NeedsClarification)
 
 
+def test_grounding_discards_hallucinated_high_bound():
+    # low=25 is in the passage; high=99 is a valid range but appears nowhere.
+    bad = _reg("x", "25", high="99")
+    out = _tool(bad)(ExtractDoseRuleInput(passage=_passage(text="give 25 mg/kg PO")))
+    assert isinstance(out, NeedsClarification)
+    assert "grounding" in out.reason
+
+
 def test_grounding_accepts_trailing_zero_variants():
     # LLM returns "50.0" for a passage that says "50 mg/kg" - same number, grounded.
     reg = _reg("x", "50.0")

@@ -5,15 +5,19 @@ from typing import Protocol
 from pydantic import BaseModel, Field
 
 from vet_agent.knowledge.interfaces import Passage
-from vet_agent.tools.models import DoseRule, DoseRuleSet, NeedsClarification
+from vet_agent.tools.models import MAX_MG_PER_KG, DoseRule, DoseRuleSet, NeedsClarification
 
 
 class ExtractedRegimen(BaseModel):
-    """One regimen as transcribed by the LLM - untrusted until grounded."""
+    """One regimen as transcribed by the LLM - untrusted until grounded.
+
+    Dose bounds mirror DoseRule's so an absurd transcription fails here, at the
+    extractor's parse boundary, rather than mid-tool when building the rule.
+    """
 
     indication: str
-    mg_per_kg_low: Decimal = Field(gt=0)
-    mg_per_kg_high: Decimal | None = Field(default=None, gt=0)
+    mg_per_kg_low: Decimal = Field(gt=0, le=MAX_MG_PER_KG)
+    mg_per_kg_high: Decimal | None = Field(default=None, gt=0, le=MAX_MG_PER_KG)
     route: str
     frequency: str
     notes: str | None = None
