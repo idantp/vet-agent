@@ -39,9 +39,20 @@ whole-range review. `make check` green throughout: ruff, mypy strict (35 source 
 - `--all-regimens`: 9 grounded regimens, each with indication/mg-kg/route/frequency + citation.
 - Fuzzy resolution (`metronidazol` → Metronidazole) and `DrugNotFound` for `xyzzy` (exit 1) work.
 
-**Deferred cosmetic notes from the final review** (non-blocking): narrow the CLI's
+**Pre-merge code review (post-completion) — 1 Critical found and fixed (`ec16100`):**
+fuzzy drug resolution could silently substitute a clinically different drug (`aciclovir` →
+Famciclovir; 163 one-edit-distance name collisions in the corpus) because `ResolvedDrug.exact`
+was dropped after resolution. Fix: `resolved_from: str | None` now surfaces the original query on
+`RetrievedPassages` / `ContraindicationReport` / `IndicationReport` (Phase 4 agents can gate on
+it), and the CLI `dose` command hard-stops on any fuzzy hit before calling the LLM. Verified by
+re-probing the aciclovir scenario against the live index. Suite now **173 passed**.
+
+**Deferred cosmetic notes from the reviews** (non-blocking): narrow the CLI's
 `type: ignore[arg-type]` via a `cast` on `weight_unit`; unify union-narrowing style in
-`cli/main.py`; surface partial grounding-discard counts in `NeedsClarification.reason`.
+`cli/main.py`; surface partial grounding-discard counts in `NeedsClarification.reason`;
+guard blank `ExtractedRegimen.indication` (wildcard match, attribution-only); strip thousands
+separators in grounding for future corpora (fail-safe today); add `resolved_from` to
+`NoPassagesFound` for agent legibility.
 
 **Remaining:** finish the development branch (merge/PR).
 
