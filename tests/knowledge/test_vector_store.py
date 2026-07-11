@@ -154,6 +154,27 @@ def test_fetch_section_returns_all_matching_chunks_ordered():
     assert all(h.score is None for h in hits)  # no vector search, no score
 
 
+_UUID_N0 = "00000000-0000-0000-0000-000000000020"
+_UUID_N2 = "00000000-0000-0000-0000-000000000021"
+_UUID_N10 = "00000000-0000-0000-0000-000000000022"
+
+
+def test_fetch_section_sorts_ordinals_numerically_not_lexically():
+    # Regression: string sort puts "10" before "2"; ordinals must sort numerically.
+    store = _store()
+    store.ensure_collection(dim=2)
+    contra = SectionType.CONTRAINDICATIONS
+    store.upsert(
+        [
+            _point(_UUID_N2, species=["all"], vector=[1.0, 0.0], key="m|c|all|2", section=contra),
+            _point(_UUID_N10, species=["all"], vector=[0.0, 1.0], key="m|c|all|10", section=contra),
+            _point(_UUID_N0, species=["all"], vector=[1.0, 0.0], key="m|c|all|0", section=contra),
+        ]
+    )
+    hits = store.fetch_section("Metronidazole", contra)
+    assert [h.logical_key for h in hits] == ["m|c|all|0", "m|c|all|2", "m|c|all|10"]
+
+
 def test_fetch_section_empty_when_no_match_or_no_collection():
     assert _store().fetch_section("Metronidazole", SectionType.DOSES) == []
     store = _store()

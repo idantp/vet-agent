@@ -14,6 +14,11 @@ def collection_name(prefix: str, model_key: str) -> str:
     return f"{prefix}__{safe}"
 
 
+def _section_order(p: Passage) -> tuple[str, int]:
+    head, _, ordinal = p.logical_key.rpartition("|")
+    return (head, int(ordinal))
+
+
 def _payload_to_passage(payload: dict[str, Any], score: float | None) -> Passage:
     return Passage(
         drug_name=payload["drug_name"],
@@ -161,4 +166,4 @@ class QdrantVectorStore:
             passages.extend(_payload_to_passage(p.payload or {}, None) for p in points)
             if offset is None:
                 break
-        return sorted(passages, key=lambda p: p.logical_key)
+        return sorted(passages, key=_section_order)
