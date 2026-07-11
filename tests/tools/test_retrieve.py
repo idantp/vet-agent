@@ -86,3 +86,16 @@ def test_top_k_bounds():
         RetrieveMonographInput(query="q", top_k=0)
     with pytest.raises(ValidationError):
         RetrieveMonographInput(query="q", top_k=21)
+
+
+def test_fuzzy_resolution_is_surfaced_not_silent():
+    out = _tool()(RetrieveMonographInput(query="dose", drug="metronidazol"))  # typo
+    assert isinstance(out, RetrievedPassages)
+    assert out.drug_name == "Metronidazole"
+    assert out.resolved_from == "metronidazol"
+
+
+def test_exact_resolution_has_no_resolved_from():
+    out = _tool()(RetrieveMonographInput(query="dose", drug="Metronidazole"))
+    assert isinstance(out, RetrievedPassages)
+    assert out.resolved_from is None

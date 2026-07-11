@@ -34,11 +34,13 @@ class RetrieveMonograph:
         self, inp: RetrieveMonographInput
     ) -> RetrievedPassages | DrugNotFound | NoPassagesFound:
         canonical: str | None = None
+        resolved_from: str | None = None
         if inp.drug is not None:
             resolved = self._drugs.resolve(inp.drug)
             if isinstance(resolved, DrugNotFound):
                 return resolved
             canonical = resolved.canonical
+            resolved_from = None if resolved.exact else inp.drug
 
         species: str | None = None
         if inp.species is not None:
@@ -63,4 +65,4 @@ class RetrieveMonograph:
             if species is not None:
                 filters["species"] = species
             return NoPassagesFound(query=inp.query, filters=filters)
-        return RetrievedPassages(drug_name=canonical, passages=hits)
+        return RetrievedPassages(drug_name=canonical, resolved_from=resolved_from, passages=hits)

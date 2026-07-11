@@ -284,6 +284,13 @@ def dose(
         typer.echo(f"No dose passages found for filters {retrieved.filters}.")
         raise typer.Exit(code=1)
 
+    if retrieved.resolved_from is not None:
+        typer.echo(
+            f"Resolved '{retrieved.resolved_from}' -> '{retrieved.drug_name}' (fuzzy match). "
+            "Re-run with the exact drug name to confirm this is the intended drug."
+        )
+        raise typer.Exit(code=1)
+
     passage = retrieved.passages[0]
     typer.echo(f"Passage: {passage.drug_name} / doses / p.{passage.book_page}")
 

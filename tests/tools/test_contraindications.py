@@ -65,3 +65,9 @@ def test_unresolvable_other_drug_is_surfaced_not_dropped():
 def test_unknown_primary_drug_returns_drug_not_found():
     out = _tool()(FindContraindicationsInput(drug="xyzzy"))
     assert isinstance(out, DrugNotFound)
+
+
+def test_fuzzy_primary_drug_is_surfaced():
+    out = _tool()(FindContraindicationsInput(drug="metronidazol"))
+    assert isinstance(out, ContraindicationReport)
+    assert out.resolved_from == "metronidazol"

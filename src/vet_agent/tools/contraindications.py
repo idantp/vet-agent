@@ -50,6 +50,7 @@ class FindContraindications:
 
         return ContraindicationReport(
             drug_name=resolved.canonical,
+            resolved_from=None if resolved.exact else inp.drug,
             contraindications=contraindications,
             interactions=interactions,
             flagged=flagged,

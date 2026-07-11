@@ -67,6 +67,7 @@ class NoPassagesFound(BaseModel):
 class RetrievedPassages(BaseModel):
     kind: Literal["retrieved_passages"] = "retrieved_passages"
     drug_name: str | None  # canonical, post-resolution; None when no drug filter
+    resolved_from: str | None = None  # original query when drug resolution was fuzzy; None if exact
     passages: list[Passage]
 
 
@@ -96,6 +97,7 @@ class FlaggedInteraction(BaseModel):
 class ContraindicationReport(BaseModel):
     kind: Literal["contraindication_report"] = "contraindication_report"
     drug_name: str
+    resolved_from: str | None = None  # original query when drug resolution was fuzzy; None if exact
     contraindications: list[Passage]
     interactions: list[Passage]
     flagged: list[FlaggedInteraction] = Field(default_factory=list)
@@ -105,5 +107,6 @@ class ContraindicationReport(BaseModel):
 class IndicationReport(BaseModel):
     kind: Literal["indication_report"] = "indication_report"
     drug_name: str
+    resolved_from: str | None = None  # original query when drug resolution was fuzzy; None if exact
     species: str | None
     passages: list[Passage]  # species-matching first; never excluded (soft signal)

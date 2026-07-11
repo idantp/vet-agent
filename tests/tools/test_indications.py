@@ -64,3 +64,9 @@ def test_species_reorders_but_never_excludes():
 def test_unknown_drug_returns_drug_not_found():
     out = _tool()(ListIndicationsInput(drug="xyzzy"))
     assert isinstance(out, DrugNotFound)
+
+
+def test_fuzzy_drug_is_surfaced():
+    out = _tool()(ListIndicationsInput(drug="metronidazol"))
+    assert isinstance(out, IndicationReport)
+    assert out.resolved_from == "metronidazol"

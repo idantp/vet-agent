@@ -37,4 +37,9 @@ class ListIndications:
                 key=lambda p: 0 if (sp in p.species or "all" in p.species) else 1,
             )
 
-        return IndicationReport(drug_name=resolved.canonical, species=species, passages=passages)
+        return IndicationReport(
+            drug_name=resolved.canonical,
+            resolved_from=None if resolved.exact else inp.drug,
+            species=species,
+            passages=passages,
+        )
