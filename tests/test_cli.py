@@ -76,3 +76,52 @@ def test_benchmark_requires_existing_eval_set(tmp_path):
     )
     assert result.exit_code != 0
     assert "not found" in result.stdout.lower()
+
+
+def test_help_lists_dose_command():
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    assert "dose" in result.stdout
+
+
+def test_dose_requires_existing_chunks(tmp_path):
+    missing = tmp_path / "nope.json"
+    result = runner.invoke(
+        app,
+        [
+            "dose",
+            "metronidazole dose for a dog with giardia",
+            "--drug",
+            "metronidazole",
+            "--species",
+            "dog",
+            "--weight",
+            "12",
+            "--chunks",
+            str(missing),
+        ],
+    )
+    assert result.exit_code != 0
+    assert "not found" in result.stdout.lower()
+
+
+def test_dose_rejects_non_numeric_weight(tmp_path):
+    chunks = tmp_path / "chunks.json"
+    chunks.write_text("[]", encoding="utf-8")
+    result = runner.invoke(
+        app,
+        [
+            "dose",
+            "q",
+            "--drug",
+            "metronidazole",
+            "--species",
+            "dog",
+            "--weight",
+            "twelve",
+            "--chunks",
+            str(chunks),
+        ],
+    )
+    assert result.exit_code != 0
+    assert "weight" in result.stdout.lower()

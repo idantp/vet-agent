@@ -21,13 +21,21 @@ def _store() -> QdrantVectorStore:
 
 
 def _point(
-    pid: str, *, species, vector, drug="Metronidazole", text="t", ch="h", key: str | None = None
+    pid: str,
+    *,
+    species,
+    vector,
+    drug="Metronidazole",
+    text="t",
+    ch="h",
+    key: str | None = None,
+    section=SectionType.DOSES,
 ) -> PointPayload:
     return PointPayload(
         point_id=pid,
         vector=vector,
         drug_name=drug,
-        section_type=SectionType.DOSES,
+        section_type=section,
         species=species,
         book_page=873,
         text=text,
@@ -113,3 +121,62 @@ def test_delete_removes_points():
     store.upsert([_point(_UUID_P1, species=["dog"], vector=[1.0, 0.0], key="p1")])
     store.delete([_UUID_P1])
     assert store.existing_hashes() == {}
+
+
+_UUID_C0 = "00000000-0000-0000-0000-000000000010"
+_UUID_C1 = "00000000-0000-0000-0000-000000000011"
+_UUID_D0 = "00000000-0000-0000-0000-000000000012"
+_UUID_OTHER = "00000000-0000-0000-0000-000000000013"
+
+
+def test_fetch_section_returns_all_matching_chunks_ordered():
+    store = _store()
+    store.ensure_collection(dim=2)
+    contra = SectionType.CONTRAINDICATIONS
+    store.upsert(
+        [
+            _point(_UUID_C1, species=["all"], vector=[1.0, 0.0], key="m|c|all|1", section=contra),
+            _point(_UUID_C0, species=["all"], vector=[0.0, 1.0], key="m|c|all|0", section=contra),
+            _point(_UUID_D0, species=["dog"], vector=[1.0, 0.0], key="m|doses|dog|0"),
+            _point(
+                _UUID_OTHER,
+                species=["all"],
+                vector=[1.0, 0.0],
+                drug="Carprofen",
+                key="carprofen|c|all|0",
+                section=contra,
+            ),
+        ]
+    )
+    hits = store.fetch_section("Metronidazole", contra)
+    # only the requested drug+section, in stable logical_key order
+    assert [h.logical_key for h in hits] == ["m|c|all|0", "m|c|all|1"]
+    assert all(h.score is None for h in hits)  # no vector search, no score
+
+
+_UUID_N0 = "00000000-0000-0000-0000-000000000020"
+_UUID_N2 = "00000000-0000-0000-0000-000000000021"
+_UUID_N10 = "00000000-0000-0000-0000-000000000022"
+
+
+def test_fetch_section_sorts_ordinals_numerically_not_lexically():
+    # Regression: string sort puts "10" before "2"; ordinals must sort numerically.
+    store = _store()
+    store.ensure_collection(dim=2)
+    contra = SectionType.CONTRAINDICATIONS
+    store.upsert(
+        [
+            _point(_UUID_N2, species=["all"], vector=[1.0, 0.0], key="m|c|all|2", section=contra),
+            _point(_UUID_N10, species=["all"], vector=[0.0, 1.0], key="m|c|all|10", section=contra),
+            _point(_UUID_N0, species=["all"], vector=[1.0, 0.0], key="m|c|all|0", section=contra),
+        ]
+    )
+    hits = store.fetch_section("Metronidazole", contra)
+    assert [h.logical_key for h in hits] == ["m|c|all|0", "m|c|all|2", "m|c|all|10"]
+
+
+def test_fetch_section_empty_when_no_match_or_no_collection():
+    assert _store().fetch_section("Metronidazole", SectionType.DOSES) == []
+    store = _store()
+    store.ensure_collection(dim=2)
+    assert store.fetch_section("Nope", SectionType.DOSES) == []

@@ -112,3 +112,9 @@ def is_species_header(line: str) -> bool:
 def detect_species_mentions(text: str) -> list[str]:
     """Best-effort canonical species mentioned anywhere in prose text."""
     return _canonical_tokens(text)
+
+
+def canonical_species(text: str) -> str | None:
+    """Canonicalize a single species string ("Dogs" -> "dog"); None if not exactly one."""
+    tokens = _canonical_tokens(text)
+    return tokens[0] if len(tokens) == 1 else None

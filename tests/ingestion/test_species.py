@@ -1,4 +1,5 @@
 from vet_agent.ingestion.species import (
+    canonical_species,
     detect_species_mentions,
     is_species_header,
     parse_species_header,
@@ -56,3 +57,15 @@ def test_is_species_header_recognizes_shape_even_for_unknown_species():
     assert is_species_header("DOGS:") is True
     assert is_species_header("Giardiasis (extra-label):") is False
     assert is_species_header("25 mg/kg PO q12h") is False
+
+
+def test_canonical_species_normalizes_case_and_plural():
+    assert canonical_species("Dogs") == "dog"
+    assert canonical_species("  CAT ") == "cat"
+    assert canonical_species("equine") == "horse"
+
+
+def test_canonical_species_rejects_unknown_and_ambiguous():
+    assert canonical_species("axolotl") is None
+    assert canonical_species("dogs and cats") is None  # two species -> not a single filter value
+    assert canonical_species("") is None
